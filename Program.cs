@@ -1,7 +1,11 @@
 using MudBlazor.Services;
 using VehicleInformationChecker.Components;
+using VehicleInformationChecker.Components.Services.SearchRegistration;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Get APIs VES Key
+var vesApiKey = builder.Configuration["APIs:VES:Key"];
 
 // Add MudBlazor services
 builder.Services.AddMudServices();
@@ -9,6 +13,9 @@ builder.Services.AddMudServices();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Register the SearchRegistrationEventService
+builder.Services.AddSingleton<ISearchRegistrationEventService, SearchRegistrationEventService>();
 
 var app = builder.Build();
 
@@ -21,7 +28,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 
 app.UseAntiforgery();
 

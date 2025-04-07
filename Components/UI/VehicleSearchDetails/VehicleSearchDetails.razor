@@ -1,0 +1,15 @@
+﻿
+<MudPaper Class="pa-16 ma-2" Elevation="1"> 
+    @if(String.IsNullOrEmpty(Vehicle!.Registration))
+    {
+        <div>
+            <MudText Typo="Typo.h5" GutterBottom="true">No Vehicle</MudText>
+        </div>
+    } 
+    else
+    {
+        <div>
+            <MudText Typo="Typo.h5" GutterBottom="true">Vehicle Registration: @Vehicle.Registration</MudText>
+        </div>
+    }
+</MudPaper>
