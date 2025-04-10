@@ -1,6 +1,7 @@
 using MudBlazor.Services;
 using VehicleInformationChecker.Components;
 using VehicleInformationChecker.Components.Services.SearchRegistration;
+using VehicleInformationChecker.Components.Services.SearchRegistrationService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,8 +15,9 @@ builder.Services.AddMudServices();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Register the SearchRegistrationEventService
+// Register additional services
 builder.Services.AddSingleton<ISearchRegistrationEventService, SearchRegistrationEventService>();
+builder.Services.AddSingleton<ISearchRegistrationService, SearchRegistrationService>();
 
 var app = builder.Build();
 

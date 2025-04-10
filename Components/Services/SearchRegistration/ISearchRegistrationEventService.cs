@@ -1,12 +1,20 @@
-﻿namespace VehicleInformationChecker.Components.Services.SearchRegistration
+﻿using VehicleInformationChecker.Components.Models;
+
+namespace VehicleInformationChecker.Components.Services.SearchRegistration
 {
     public interface ISearchRegistrationEventService
     {
         /// <summary>
-        /// Grid Line With Section Number Event Delegate
+        /// Search with registration event delegate
         /// </summary>
         /// <returns><see cref="Task"/></returns>
         public delegate Task SearchRegistrationEvent(string registration);
+
+        /// <summary>
+        /// Search completed event delegate
+        /// </summary>
+        /// <returns><see cref="Task"/></returns>
+        public delegate void SearchCompletedEvent(VehicleModel vehicle);
 
         /// <summary>
         /// Event for when a registration is searched
@@ -16,7 +24,7 @@
         /// <summary>
         /// Event for when a search is completed
         /// </summary>
-        event SearchRegistrationEvent OnSearchCompleted;
+        event SearchCompletedEvent OnSearchCompleted;
 
         /// <summary>
         /// Triggers any event listeners when a registration search has started
@@ -29,7 +37,7 @@
         /// Triggers any event listeners when a registration search has completed
         /// </summary>
         /// <param name="registration"><see cref="string"/></param>
-        /// <returns></returns>
-        Task NotifySearchCompleted(string registration);
+        /// <returns><see cref="VehicleModel"/></returns>
+        void NotifySearchCompleted(VehicleModel vehicle);
     }
 }

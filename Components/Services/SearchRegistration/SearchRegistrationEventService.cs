@@ -1,11 +1,12 @@
-﻿using VehicleInformationChecker.Components.Services.SearchRegistration;
+﻿using VehicleInformationChecker.Components.Models;
+using VehicleInformationChecker.Components.Services.SearchRegistration;
 
 namespace VehicleInformationChecker.Components.Services.SearchRegistration
 {
     public sealed class SearchRegistrationEventService : ISearchRegistrationEventService
     {
         private event ISearchRegistrationEventService.SearchRegistrationEvent? _onSearchRegistration;
-        private event ISearchRegistrationEventService.SearchRegistrationEvent? _onSearchComplete;
+        private event ISearchRegistrationEventService.SearchCompletedEvent? _onSearchComplete;
 
         event ISearchRegistrationEventService.SearchRegistrationEvent ISearchRegistrationEventService.OnSearchRegistration
         {
@@ -13,7 +14,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             remove => _onSearchRegistration -= value;
         }
 
-        event ISearchRegistrationEventService.SearchRegistrationEvent ISearchRegistrationEventService.OnSearchCompleted
+        event ISearchRegistrationEventService.SearchCompletedEvent ISearchRegistrationEventService.OnSearchCompleted
         {
             add => _onSearchComplete += value;
             remove => _onSearchComplete -= value;
@@ -26,10 +27,9 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             return task ?? Task.CompletedTask;
         }
 
-        public Task NotifySearchCompleted(string registration)
+        public void NotifySearchCompleted(VehicleModel vehicle)
         {
-            var task = _onSearchComplete?.Invoke(registration);
-            return task ?? Task.CompletedTask;
+            _onSearchComplete?.Invoke(vehicle);
         }
 
         public void Dispose()

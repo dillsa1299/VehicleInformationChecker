@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using VehicleInformationChecker.Components.Models;
 using VehicleInformationChecker.Components.Services.SearchRegistration;
+using VehicleInformationChecker.Components.Services.SearchRegistrationService;
 
 namespace VehicleInformationChecker.Components.Pages
 {
@@ -9,22 +10,24 @@ namespace VehicleInformationChecker.Components.Pages
         [Inject]
         private ISearchRegistrationEventService SearchRegistrationEventService { get; set; } = default!;
 
+        [Inject]
+        private ISearchRegistrationService SearchRegistrationService { get; set; } = default!;
+
         private VehicleModel _vehicle = new VehicleModel();
         private bool _searching = false;
 
         private async Task SearchRegistration(string registration)
         {
-            await Task.Delay(5000);
-            await SearchRegistrationEventService.NotifySearchCompleted(registration);
+            var vehicle = await SearchRegistrationService.SearchRegistration(registration);
+            SearchRegistrationEventService.NotifySearchCompleted(vehicle);
         }
 
-        private async Task OnSearchCompleted(string registration)
+        private void OnSearchCompleted(VehicleModel vehicle)
         {
-            await Task.Delay(1);
-            _vehicle = new VehicleModel
+            if (vehicle.Registration != null)
             {
-                Registration = registration
-            };
+                _vehicle = vehicle;
+            }
             StateHasChanged();
         }
 

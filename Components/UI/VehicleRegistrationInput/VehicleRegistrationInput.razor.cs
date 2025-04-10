@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using VehicleInformationChecker.Components.Models;
 using VehicleInformationChecker.Components.Services.SearchRegistration;
 
 namespace VehicleInformationChecker.Components.UI.VehicleRegistrationInput
@@ -20,11 +21,9 @@ namespace VehicleInformationChecker.Components.UI.VehicleRegistrationInput
             StateHasChanged();
         }
 
-        private async Task OnSearchCompleted(string registration)
+        private void OnSearchCompleted(VehicleModel vehicle)
         {
-            await Task.Delay(1);
             _searching = false;
-            StateHasChanged();
         }
 
         protected override Task OnInitializedAsync()
