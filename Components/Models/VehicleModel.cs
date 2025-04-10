@@ -2,18 +2,22 @@
 {
     public class VehicleModel
     {
-        public string? Registration { get; set; }
-        public string? Make { get; set; }
-        public string? Model { get; set; }
-        public string? Colour { get; set; }
-        public string? Year { get; set; }
-        public string? FuelType { get; set; }
-        public string? EngineSize { get; set; }
-        public string? Transmission { get; set; }
-        public string? BodyType { get; set; }
-        public string? Doors { get; set; }
-        public string? Seats { get; set; }
+        public string? RegistrationNumber { get; set; }
+        public string? TaxStatus { get; set; }
         public string? TaxDueDate { get; set; }
-        public string? MOTExpiryDate { get; set; }
+        public string? MotStatus { get; set; }
+        public string? Make { get; set; }
+        public int YearOfManufacture { get; set; }
+        public int EngineCapacity { get; set; }
+        public int Co2Emissions { get; set; }
+        public string? FuelType { get; set; }
+        public bool MarkedForExport { get; set; }
+        public string? Colour { get; set; }
+        public string? TypeApproval { get; set; }
+        public int RevenueWeight { get; set; }
+        public string? DateOfLastV5CIssued { get; set; }
+        public string? MotExpiryDate { get; set; }
+        public string? Wheelplan { get; set; }
+        public string? MonthOfFirstRegistration { get; set; }
     }
 }

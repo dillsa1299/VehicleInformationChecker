@@ -14,7 +14,6 @@ namespace VehicleInformationChecker.Components.Pages
         private ISearchRegistrationService SearchRegistrationService { get; set; } = default!;
 
         private VehicleModel _vehicle = new VehicleModel();
-        private bool _searching = false;
 
         private async Task SearchRegistration(string registration)
         {
@@ -24,10 +23,7 @@ namespace VehicleInformationChecker.Components.Pages
 
         private void OnSearchCompleted(VehicleModel vehicle)
         {
-            if (vehicle.Registration != null)
-            {
-                _vehicle = vehicle;
-            }
+            _vehicle = vehicle;
             StateHasChanged();
         }
 

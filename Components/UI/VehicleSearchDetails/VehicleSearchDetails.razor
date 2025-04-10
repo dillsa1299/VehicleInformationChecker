@@ -1,15 +1,33 @@
 ﻿
 <MudPaper Class="pa-16 ma-2" Elevation="1"> 
-    @if(String.IsNullOrEmpty(Vehicle!.Registration))
+    @if(String.IsNullOrEmpty(Vehicle!.RegistrationNumber))
     {
         <div>
-            <MudText Typo="Typo.h5" GutterBottom="true">No Vehicle</MudText>
+            <MudText Typo="Typo.h5" GutterBottom="true">Registration does not exist</MudText>
         </div>
     } 
     else
     {
         <div>
-            <MudText Typo="Typo.h5" GutterBottom="true">Vehicle Registration: @Vehicle.Registration</MudText>
+            <MudText Typo="Typo.body2">
+                registrationNumber  :  @Vehicle.RegistrationNumber <br />
+                taxStatus  :  @Vehicle.TaxStatus <br />
+                taxDueDate  :  @Vehicle.TaxDueDate <br />
+                motStatus  :  @Vehicle.MotStatus <br />
+                make  :  @Vehicle.Make <br />
+                yearOfManufacture  :  @Vehicle.YearOfManufacture <br />
+                engineCapacity  :  @Vehicle.EngineCapacity <br />
+                co2Emissions  :  @Vehicle.Co2Emissions <br />
+                fuelType  :  @Vehicle.FuelType <br />
+                markedForExport  :  @Vehicle.MarkedForExport <br />
+                colour  :  @Vehicle.Colour <br />
+                typeApproval  :  @Vehicle.TypeApproval <br />
+                revenueWeight  :  @Vehicle.RevenueWeight <br />
+                dateOfLastV5CIssued  :  @Vehicle.DateOfLastV5CIssued <br />
+                motExpiryDate  :  @Vehicle.MotExpiryDate <br />
+                wheelplan  :  @Vehicle.Wheelplan <br />
+                monthOfFirstRegistration  :  @Vehicle.MonthOfFirstRegistration <br />
+            </MudText>
         </div>
     }
 </MudPaper>

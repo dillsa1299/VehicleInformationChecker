@@ -5,9 +5,6 @@ using VehicleInformationChecker.Components.Services.SearchRegistrationService;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Get APIs VES Key
-var vesApiKey = builder.Configuration["APIs:VES:Key"];
-
 // Add MudBlazor services
 builder.Services.AddMudServices();
 
@@ -15,9 +12,16 @@ builder.Services.AddMudServices();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddHttpClient();
+
 // Register additional services
 builder.Services.AddSingleton<ISearchRegistrationEventService, SearchRegistrationEventService>();
-builder.Services.AddSingleton<ISearchRegistrationService, SearchRegistrationService>();
+builder.Services.AddSingleton<ISearchRegistrationService>(provider =>
+{
+    var httpClient = provider.GetRequiredService<HttpClient>();
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    return new SearchRegistrationService(httpClient, configuration);
+});
 
 var app = builder.Build();
 
