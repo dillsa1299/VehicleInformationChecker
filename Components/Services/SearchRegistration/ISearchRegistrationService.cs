@@ -9,6 +9,6 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
         /// </summary>
         /// <param name="registration"><see cref="string"/></param>
         /// <returns><see cref="VehicleModel"/></returns>
-        ValueTask<VehicleModel> SearchRegistration(string registration);
+        ValueTask<VehicleModel> SearchRegistrationAsync(string registration);
     }
 }

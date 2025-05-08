@@ -1,33 +1,41 @@
-﻿
-<MudPaper Class="pa-16 ma-2" Elevation="1"> 
-    @if(String.IsNullOrEmpty(Vehicle!.RegistrationNumber))
+﻿@if (Vehicle?.Images != null && Vehicle.Images.Any())
+{
+    <MudCarousel Style="height:300px;" ShowArrows="false" ShowBullets="true" AutoCycle="false" TData="object">
+        @foreach (var image in Vehicle.Images)
+        {
+            <!-- Preload images -->
+            <link rel="preload" href="@image.Link" as="image" />
+
+            <MudCarouselItem Transition="Transition.Fade" Color="@Color.Transparent">
+                <div class="d-flex justify-center">
+                    <MudImage Height="300" Src=@image.Link Alt=@image.Title Class="rounded-lg" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Center"/>
+                </div>
+            </MudCarouselItem>
+        }
+    </MudCarousel>
+}
+
+<MudPaper Class="pa-16 ma-2" Elevation="1">
+    @if (String.IsNullOrEmpty(Vehicle!.RegistrationNumber))
     {
-        <div>
-            <MudText Typo="Typo.h5" GutterBottom="true">Registration does not exist</MudText>
-        </div>
-    } 
+        <MudText Typo="Typo.h5" GutterBottom="true">Registration does not exist</MudText>
+    }
     else
     {
-        <div>
-            <MudText Typo="Typo.body2">
-                registrationNumber  :  @Vehicle.RegistrationNumber <br />
-                taxStatus  :  @Vehicle.TaxStatus <br />
-                taxDueDate  :  @Vehicle.TaxDueDate <br />
-                motStatus  :  @Vehicle.MotStatus <br />
-                make  :  @Vehicle.Make <br />
-                yearOfManufacture  :  @Vehicle.YearOfManufacture <br />
-                engineCapacity  :  @Vehicle.EngineCapacity <br />
-                co2Emissions  :  @Vehicle.Co2Emissions <br />
-                fuelType  :  @Vehicle.FuelType <br />
-                markedForExport  :  @Vehicle.MarkedForExport <br />
-                colour  :  @Vehicle.Colour <br />
-                typeApproval  :  @Vehicle.TypeApproval <br />
-                revenueWeight  :  @Vehicle.RevenueWeight <br />
-                dateOfLastV5CIssued  :  @Vehicle.DateOfLastV5CIssued <br />
-                motExpiryDate  :  @Vehicle.MotExpiryDate <br />
-                wheelplan  :  @Vehicle.Wheelplan <br />
-                monthOfFirstRegistration  :  @Vehicle.MonthOfFirstRegistration <br />
-            </MudText>
-        </div>
+        <MudText Typo="Typo.body2">
+            Year  :  @Vehicle.YearOfManufacture <br />
+            Make  :  @Vehicle.Make <br />
+            Colour  :  @Vehicle.Colour <br />
+            Engine capacity  :  @Vehicle.EngineCapacity <br />
+            Fuel  :  @Vehicle.FuelType <br />
+            <br />
+            Tax status  :  @Vehicle.TaxStatus <br />
+            Tax due date  :  @Vehicle.TaxDueDate <br />
+            MOT status  :  @Vehicle.MotStatus <br />
+            MOT expiry date  :  @Vehicle.MotExpiryDate <br />
+            <br />
+            Last V5C issued  :  @Vehicle.DateOfLastV5CIssued <br />
+            First registered  :  @Vehicle.MonthOfFirstRegistration?.ToString("MMMM yyyy") <br />
+        </MudText>
     }
 </MudPaper>

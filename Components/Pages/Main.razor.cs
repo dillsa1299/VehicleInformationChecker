@@ -17,7 +17,7 @@ namespace VehicleInformationChecker.Components.Pages
 
         private async Task SearchRegistration(string registration)
         {
-            var vehicle = await SearchRegistrationService.SearchRegistration(registration);
+            var vehicle = await SearchRegistrationService.SearchRegistrationAsync(registration);
             SearchRegistrationEventService.NotifySearchCompleted(vehicle);
         }
 
