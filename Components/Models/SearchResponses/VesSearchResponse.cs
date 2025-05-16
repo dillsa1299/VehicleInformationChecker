@@ -2,25 +2,25 @@
 {
     public class VesSearchResponse
     {
-        public string? RegistrationNumber { get; set; }
-        public string? TaxStatus { get; set; }
-        public string? TaxDueDate { get; set; }
-        public string? ArtEndDate { get; set; }
-        public string? MotStatus { get; set; }
-        public string? Make { get; set; }
+        public string RegistrationNumber { get; set; } = String.Empty;
+        public string TaxStatus { get; set; } = String.Empty;
+        public string TaxDueDate { get; set; } = String.Empty;
+        public string ArtEndDate { get; set; } = String.Empty;
+        public string MotStatus { get; set; } = String.Empty;
+        public string Make { get; set; } = String.Empty;
         public int YearOfManufacture { get; set; }
         public int EngineCapacity { get; set; }
         public int Co2Emissions { get; set; }
-        public string? FuelType { get; set; }
+        public string FuelType { get; set; } = String.Empty;
         public bool MarkedForExport { get; set; }
-        public string? Colour { get; set; }
-        public string? TypeApproval { get; set; }
+        public string Colour { get; set; } = String.Empty;
+        public string TypeApproval { get; set; } = String.Empty;
         public int RevenueWeight { get; set; }
-        public string? DateOfLastV5CIssued { get; set; }
-        public string? MotExpiryDate { get; set; }
-        public string? Wheelplan { get; set; }
-        public string? MonthOfFirstRegistration { get; set; }
-        public string? EuroStatus { get; set; }
-        public string? RealDrivingEmissions { get; set; }
+        public string DateOfLastV5CIssued { get; set; } = String.Empty;
+        public string MotExpiryDate { get; set; } = String.Empty;
+        public string Wheelplan { get; set; } = String.Empty;
+        public string MonthOfFirstRegistration { get; set; } = String.Empty;
+        public string EuroStatus { get; set; } = String.Empty;
+        public string RealDrivingEmissions { get; set; } = String.Empty;
     }
 }

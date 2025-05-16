@@ -1,74 +1,84 @@
-﻿using Microsoft.AspNetCore.DataProtection.KeyManagement;
-using Microsoft.AspNetCore.Http;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
 using VehicleInformationChecker.Components.Models;
 using VehicleInformationChecker.Components.Models.SearchResponses;
 using VehicleInformationChecker.Components.Models.SearchResponses.ImageSearch;
+using VehicleInformationChecker.Components.Models.SearchResponses.MotSearch;
 
 namespace VehicleInformationChecker.Components.Services.SearchRegistrationService
 {
     public sealed class SearchRegistrationService : ISearchRegistrationService
     {
         private readonly HttpClient _httpClient;
+
         private readonly string _vesKey;
         private readonly string _vesURL;
+
+        private readonly string _motUrl;
+        private readonly string _motClientId;
+        private readonly string _motClientSecret;
+        private readonly string _motKey;
+        private readonly string _motScopeUrl;
+        private readonly string _motTokenUrl;
+
         private readonly string _googleKey;
         private readonly string _googleCx;
+
+        private readonly JsonSerializerOptions _jsonSerializerOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         public SearchRegistrationService(HttpClient httpClient, IConfiguration configuration)
         {
             _httpClient = httpClient;
+
             _vesKey = configuration["APIs:VES:Key"]
                       ?? throw new InvalidOperationException("VES API key not found in configuration.");
             _vesURL = configuration["APIs:VES:URL"]
                       ?? throw new InvalidOperationException("VES API URL not found in configuration.");
+
+            _motUrl = configuration["APIs:MOT:URL"]
+                      ?? throw new InvalidOperationException("MOT API URL not found in configuration.");
+            _motClientId = configuration["APIs:MOT:ClientId"]
+                           ?? throw new InvalidOperationException("MOT API ClientId not found in configuration.");
+            _motClientSecret = configuration["APIs:MOT:ClientSecret"]
+                               ?? throw new InvalidOperationException("MOT API ClientSecret not found in configuration.");
+            _motKey = configuration["APIs:MOT:Key"]
+                      ?? throw new InvalidOperationException("MOT API key not found in configuration.");
+            _motScopeUrl = configuration["APIs:MOT:ScopeUrl"]
+                           ?? throw new InvalidOperationException("MOT API ScopeUrl not found in configuration.");
+            _motTokenUrl = configuration["APIs:MOT:TokenUrl"]
+                           ?? throw new InvalidOperationException("MOT API TokenUrl not found in configuration.");
+
             _googleKey = configuration["APIs:Google:Key"]
-                      ?? throw new InvalidOperationException("Google API key not found in configuration.");
+                         ?? throw new InvalidOperationException("Google API key not found in configuration.");
             _googleCx = configuration["APIs:Google:Cx"]
-                      ?? throw new InvalidOperationException("Google API cx not found in configuration.");
+                        ?? throw new InvalidOperationException("Google API cx not found in configuration.");
         }
 
         public async ValueTask<VehicleModel> SearchRegistrationAsync(string registration)
         {
             var vehicleData = new VehicleModel();
 
-            var vesSearchResponse = await SearchVESAsync(registration);
-            if (vesSearchResponse == null || string.IsNullOrEmpty(vesSearchResponse.RegistrationNumber))
-            {
-                return vehicleData;
-            }
+            // Vehicle enquiry service (VES) search
+            var vesSearchResponse = await SearchVesAsync(registration);
+            if (string.IsNullOrEmpty(vesSearchResponse.RegistrationNumber)) return vehicleData;
 
-            var imageSearchResponse = await SearchImagesAsync($"{vesSearchResponse.Colour} {vesSearchResponse.YearOfManufacture} {vesSearchResponse.Make}");
-            if (imageSearchResponse == null || imageSearchResponse.Items == null || !imageSearchResponse.Items.Any())
-            {
-                return vehicleData;
-            }
+            // MOT search
+            var motSearchResponse = await SearchMotAsync(registration);
+            if (string.IsNullOrEmpty(motSearchResponse?.Registration)) return vehicleData;
 
-            var textInfo = CultureInfo.CurrentCulture.TextInfo;
-            vehicleData = new VehicleModel
-            {
-                RegistrationNumber = vesSearchResponse.RegistrationNumber,
-                YearOfManufacture = vesSearchResponse.YearOfManufacture,
-                Make = textInfo.ToTitleCase(vesSearchResponse.Make.ToLower()),
-                Colour = textInfo.ToTitleCase(vesSearchResponse.Colour.ToLower()),
-                EngineCapacity = $"{vesSearchResponse.EngineCapacity} cc",
-                FuelType = textInfo.ToTitleCase(vesSearchResponse.FuelType.ToLower()),
-                TaxStatus = vesSearchResponse.TaxStatus,
-                TaxDueDate = DateOnly.ParseExact(vesSearchResponse.TaxDueDate, "yyyy-MM-dd"),
-                MotStatus = vesSearchResponse.MotStatus,
-                MotExpiryDate = DateOnly.ParseExact(vesSearchResponse.MotExpiryDate, "yyyy-MM-dd"),
-                DateOfLastV5CIssued = DateOnly.ParseExact(vesSearchResponse.DateOfLastV5CIssued, "yyyy-MM-dd"),
-                MonthOfFirstRegistration = DateOnly.ParseExact(vesSearchResponse.MonthOfFirstRegistration, "yyyy-MM"),
-                Images = imageSearchResponse.Items
-            };
+            // Image search
+            var imageSearchResponse = await SearchImagesAsync($"{vesSearchResponse.Colour} {vesSearchResponse.YearOfManufacture} {vesSearchResponse.Make} {motSearchResponse.Model}");
+            if (imageSearchResponse?.Items == null || imageSearchResponse.Items.Count == 0) return vehicleData;
 
-            await Task.Delay(1000); // Simulate a delay for demonstration purposes
+            vehicleData = MapResponses(vesSearchResponse, motSearchResponse, imageSearchResponse);
 
             return vehicleData;
         }
 
-        private async ValueTask<VesSearchResponse> SearchVESAsync(string registration)
+        private async ValueTask<VesSearchResponse> SearchVesAsync(string registration)
         {
             var parsedResponse = new VesSearchResponse();
 
@@ -87,17 +97,55 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
 
             // Parse response
             var responseContent = await response.Content.ReadAsStringAsync();
-            parsedResponse = JsonSerializer.Deserialize<VesSearchResponse>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            parsedResponse = JsonSerializer.Deserialize<VesSearchResponse>(responseContent, _jsonSerializerOptions);
 
-            if (parsedResponse == null)
+            if (String.IsNullOrEmpty(parsedResponse?.RegistrationNumber))
             {
                 throw new InvalidOperationException("Failed to parse VES search response.");
             }
 
             return parsedResponse;
+        }
+
+        private async ValueTask<MotSearchResponse> SearchMotAsync(string registration)
+        {
+            // 1. Request OAuth2 token
+            // TODO - Cache the token for 1 hour until it expires
+            var tokenRequest = new HttpRequestMessage(HttpMethod.Post, _motTokenUrl)
+            {
+                Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["client_id"] = _motClientId,
+                    ["client_secret"] = _motClientSecret,
+                    ["scope"] = _motScopeUrl,
+                    ["grant_type"] = "client_credentials"
+                })
+            };
+
+            using var tokenResponse = await _httpClient.SendAsync(tokenRequest);
+            if (!tokenResponse.IsSuccessStatusCode)
+                return new MotSearchResponse();
+
+            var tokenContent = await tokenResponse.Content.ReadAsStringAsync();
+            using var tokenDoc = JsonDocument.Parse(tokenContent);
+            var accessToken = tokenDoc.RootElement.GetProperty("access_token").GetString();
+
+            if (string.IsNullOrEmpty(accessToken))
+                return new MotSearchResponse();
+
+            // 2. Call the MOT API with the access token
+            var motRequest = new HttpRequestMessage(HttpMethod.Get, $"{_motUrl}/{Uri.EscapeDataString(registration)}");
+            motRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+            motRequest.Headers.Add("x-api-key", _motKey);
+
+            using var motResponse = await _httpClient.SendAsync(motRequest);
+            if (!motResponse.IsSuccessStatusCode)
+                return new MotSearchResponse();
+
+            var motContent = await motResponse.Content.ReadAsStringAsync();
+            var parsedResponse = JsonSerializer.Deserialize<MotSearchResponse>(motContent, _jsonSerializerOptions);
+
+            return parsedResponse ?? new MotSearchResponse();
         }
 
         public async Task<ImageSearchResponse?> SearchImagesAsync(string query)
@@ -106,6 +154,31 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
             var response = await _httpClient.GetFromJsonAsync<ImageSearchResponse>(url);
 
             return response;
+        }
+
+        private static VehicleModel MapResponses(VesSearchResponse vesSearchResponse, MotSearchResponse motSearchResponse, ImageSearchResponse imageSearchResponse)
+        {
+            var textInfo = CultureInfo.CurrentCulture.TextInfo;
+
+            return new VehicleModel
+            {
+                RegistrationNumber = vesSearchResponse.RegistrationNumber,
+                YearOfManufacture = vesSearchResponse.YearOfManufacture,
+                Make = textInfo.ToTitleCase(vesSearchResponse.Make.ToLower()),
+                Model = textInfo.ToTitleCase(motSearchResponse.Model.ToLower()),
+                Colour = textInfo.ToTitleCase(vesSearchResponse.Colour.ToLower()),
+                EngineCapacity = $"{vesSearchResponse.EngineCapacity} cc",
+                FuelType = textInfo.ToTitleCase(vesSearchResponse.FuelType.ToLower()),
+                TaxStatus = vesSearchResponse.TaxStatus,
+                TaxDueDate = DateOnly.ParseExact(vesSearchResponse.TaxDueDate, "yyyy-MM-dd"),
+                MotStatus = vesSearchResponse.MotStatus,
+                MotExpiryDate = !String.IsNullOrEmpty(vesSearchResponse.MotExpiryDate) ?
+                                    DateOnly.ParseExact(vesSearchResponse.MotExpiryDate, "yyyy-MM-dd") :
+                                    null,
+                DateOfLastV5CIssued = DateOnly.ParseExact(vesSearchResponse.DateOfLastV5CIssued, "yyyy-MM-dd"),
+                MonthOfFirstRegistration = DateOnly.ParseExact(vesSearchResponse.MonthOfFirstRegistration, "yyyy-MM"),
+                Images = imageSearchResponse.Items ?? []
+            };
         }
     }
 }
