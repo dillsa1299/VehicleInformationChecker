@@ -20,6 +20,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
         private readonly string _motKey;
         private readonly string _motScopeUrl;
         private readonly string _motTokenUrl;
+        private MotAuthToken _motAuthToken = new MotAuthToken();
 
         private readonly string _googleKey;
         private readonly string _googleCx;
@@ -109,8 +110,29 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
 
         private async ValueTask<MotSearchResponse> SearchMotAsync(string registration)
         {
-            // 1. Request OAuth2 token
-            // TODO - Cache the token for 1 hour until it expires
+            // Get authentication token
+            if (!await GetMotTokenAsync()) return new MotSearchResponse();
+
+            // Call the MOT API with the access token
+            var motRequest = new HttpRequestMessage(HttpMethod.Get, $"{_motUrl}/{Uri.EscapeDataString(registration)}");
+            motRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(_motAuthToken.Type, _motAuthToken.Token);
+            motRequest.Headers.Add("x-api-key", _motKey);
+
+            using var motResponse = await _httpClient.SendAsync(motRequest);
+            if (!motResponse.IsSuccessStatusCode)
+                return new MotSearchResponse();
+
+            var motContent = await motResponse.Content.ReadAsStringAsync();
+            var parsedResponse = JsonSerializer.Deserialize<MotSearchResponse>(motContent, _jsonSerializerOptions);
+
+            return parsedResponse ?? new MotSearchResponse();
+        }
+
+        public async Task<bool> GetMotTokenAsync()
+        {
+            // Check if token is still valid
+            if (_motAuthToken.ExpireTime > DateTime.UtcNow) return true;
+
             var tokenRequest = new HttpRequestMessage(HttpMethod.Post, _motTokenUrl)
             {
                 Content = new FormUrlEncodedContent(new Dictionary<string, string>
@@ -124,28 +146,26 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
 
             using var tokenResponse = await _httpClient.SendAsync(tokenRequest);
             if (!tokenResponse.IsSuccessStatusCode)
-                return new MotSearchResponse();
+                return false;
 
             var tokenContent = await tokenResponse.Content.ReadAsStringAsync();
             using var tokenDoc = JsonDocument.Parse(tokenContent);
+
+            var tokenType = tokenDoc.RootElement.GetProperty("token_type").GetString();
+            var expiresIn = tokenDoc.RootElement.GetProperty("expires_in").GetInt32();
             var accessToken = tokenDoc.RootElement.GetProperty("access_token").GetString();
 
-            if (string.IsNullOrEmpty(accessToken))
-                return new MotSearchResponse();
+            if (string.IsNullOrEmpty(tokenType) || string.IsNullOrEmpty(accessToken))
+                return false;
 
-            // 2. Call the MOT API with the access token
-            var motRequest = new HttpRequestMessage(HttpMethod.Get, $"{_motUrl}/{Uri.EscapeDataString(registration)}");
-            motRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-            motRequest.Headers.Add("x-api-key", _motKey);
+            _motAuthToken = new MotAuthToken
+            {
+                Type = tokenType,
+                ExpireTime = DateTime.UtcNow.AddSeconds(expiresIn),
+                Token = accessToken
+            };
 
-            using var motResponse = await _httpClient.SendAsync(motRequest);
-            if (!motResponse.IsSuccessStatusCode)
-                return new MotSearchResponse();
-
-            var motContent = await motResponse.Content.ReadAsStringAsync();
-            var parsedResponse = JsonSerializer.Deserialize<MotSearchResponse>(motContent, _jsonSerializerOptions);
-
-            return parsedResponse ?? new MotSearchResponse();
+            return true;
         }
 
         public async Task<ImageSearchResponse?> SearchImagesAsync(string query)
