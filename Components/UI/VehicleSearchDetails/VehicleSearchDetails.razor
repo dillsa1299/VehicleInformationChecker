@@ -8,9 +8,11 @@
 
             <MudCarouselItem Transition="Transition.Fade" Color="@Color.Transparent">
                 <div class="d-flex justify-center">
-                    <MudImage Height="300" Src=@image.Link Alt=@image.Title Class="rounded-lg" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Center"/>
+                    <MudImage Height="300" Src="@image.Link" FallbackSrc="@_carPlaceholder" Alt="@image.Title" Class="rounded-lg" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Center"/>
                 </div>
             </MudCarouselItem>
+
+
         }
     </MudCarousel>
 }

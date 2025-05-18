@@ -34,6 +34,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
         {
             _httpClient = httpClient;
 
+            // Get configuration values
             _vesKey = configuration["APIs:VES:Key"]
                       ?? throw new InvalidOperationException("VES API key not found in configuration.");
             _vesURL = configuration["APIs:VES:URL"]
@@ -56,27 +57,34 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
                          ?? throw new InvalidOperationException("Google API key not found in configuration.");
             _googleCx = configuration["APIs:Google:Cx"]
                         ?? throw new InvalidOperationException("Google API cx not found in configuration.");
+
+            // TODO: Should this be loaded from a different file?
         }
 
         public async ValueTask<VehicleModel> SearchRegistrationAsync(string registration)
         {
-            var vehicleData = new VehicleModel();
+            // Setup search tasks
+            var vesTask = SearchVesAsync(registration);
+            var motTask = SearchMotAsync(registration);
 
-            // Vehicle enquiry service (VES) search
-            var vesSearchResponse = await SearchVesAsync(registration);
-            if (string.IsNullOrEmpty(vesSearchResponse.RegistrationNumber)) return vehicleData;
+            // Wait for all to complete
+            await Task.WhenAll(vesTask.AsTask(), motTask.AsTask());
 
-            // MOT search
-            var motSearchResponse = await SearchMotAsync(registration);
-            if (string.IsNullOrEmpty(motSearchResponse?.Registration)) return vehicleData;
+            // Get results
+            var vesSearchResponse = await vesTask;
+            var motSearchResponse = await motTask;
+
+            if (string.IsNullOrEmpty(vesSearchResponse.RegistrationNumber) || string.IsNullOrEmpty(vesSearchResponse.RegistrationNumber))
+                // TODO: Should use try catch instead for proper error handling
+                return new VehicleModel();
 
             // Image search
             var imageSearchResponse = await SearchImagesAsync($"{vesSearchResponse.Colour} {vesSearchResponse.YearOfManufacture} {vesSearchResponse.Make} {motSearchResponse.Model}");
-            if (imageSearchResponse?.Items == null || imageSearchResponse.Items.Count == 0) return vehicleData;
+            if (imageSearchResponse?.Items == null || imageSearchResponse.Items.Count == 0)
+                // TODO: Should have placeholder image if none found
+                return new VehicleModel();
 
-            vehicleData = MapResponses(vesSearchResponse, motSearchResponse, imageSearchResponse);
-
-            return vehicleData;
+            return MapResponses(vesSearchResponse, motSearchResponse, imageSearchResponse); ;
         }
 
         private async ValueTask<VesSearchResponse> SearchVesAsync(string registration)
@@ -91,10 +99,10 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
                 })
             };
             request.Headers.Add("x-api-key", _vesKey);
-            using var response = await _httpClient.SendAsync(request);
 
-            // Check if the response is successful
-            if (!response.IsSuccessStatusCode) return parsedResponse;
+            using var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+                return parsedResponse;
 
             // Parse response
             var responseContent = await response.Content.ReadAsStringAsync();
