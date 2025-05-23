@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
+using System.ComponentModel.DataAnnotations;
 using VehicleInformationChecker.Components.Models;
 using VehicleInformationChecker.Components.Services.SearchRegistration;
 
@@ -9,21 +11,24 @@ namespace VehicleInformationChecker.Components.UI.VehicleRegistrationInput
     {
         [Inject]
         private ISearchRegistrationEventService SearchRegistrationEventService { get; set; } = default!;
-        
-        private string _vehicleRegistration = string.Empty;
-        private readonly IMask inputMask = new RegexMask(@"^[a-zA-Z0-9]{0,7}$");
-        private bool _searching { get; set; }
 
-        private async Task OnSearchClicked()
+        [Parameter]
+        public VehicleModel Vehicle { get; set; } = default!;
+
+        RegistrationInputModel _registrationInput = new();
+        private readonly IMask _inputMask = new RegexMask(@"^[a-zA-Z0-9]{0,7}$");
+        private bool _searchFailed;
+
+        private async Task SearchRegistrationInput()
         {
-            _searching = true;
-            await SearchRegistrationEventService.NotifySearchRegistration(_vehicleRegistration);
+            await SearchRegistrationEventService.NotifySearchRegistrationAsync(_registrationInput.Input);
             StateHasChanged();
         }
 
-        private void OnSearchCompleted(VehicleModel vehicle)
+        private Task OnSearchCompleted(VehicleModel vehicle)
         {
-            _searching = false;
+            _searchFailed = vehicle.RegistrationNumber == string.Empty;
+            return InvokeAsync(StateHasChanged);
         }
 
         protected override Task OnInitializedAsync()
@@ -36,6 +41,11 @@ namespace VehicleInformationChecker.Components.UI.VehicleRegistrationInput
         public void Dispose()
         {
             SearchRegistrationEventService.OnSearchCompleted -= OnSearchCompleted;
+        }
+
+        private class RegistrationInputModel
+        {
+            public string Input { get; set; } = string.Empty;
         }
     }
 }

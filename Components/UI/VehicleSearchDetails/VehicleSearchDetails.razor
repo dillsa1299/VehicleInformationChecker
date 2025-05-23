@@ -1,34 +1,44 @@
-﻿@if (Vehicle?.Images != null && Vehicle.Images.Any())
+﻿@if (!String.IsNullOrEmpty(Vehicle!.RegistrationNumber))
 {
     <MudCarousel Style="height:300px;" ShowArrows="false" ShowBullets="true" AutoCycle="false" TData="object">
-        @foreach (var image in Vehicle.Images)
-        {
-            <!-- Preload images -->
-            <link rel="preload" href="@image.Link" as="image" />
 
-            <MudCarouselItem Transition="Transition.Fade" Color="@Color.Transparent">
-                <div class="d-flex justify-center">
-                    <MudImage Height="300" Src="@image.Link" FallbackSrc="@_carPlaceholder" Alt="@image.Title" Class="rounded-lg" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Center"/>
-                </div>
-            </MudCarouselItem>
+        <BulletTemplate Context="selected">
+            <div Class="mud-button-root mud-icon-button mud-icon-button-color-primary mud-ripple mud-ripple-icon">
+                <span class="mud-icon-button-label">
+                    <MudIcon Icon="@(selected? Icons.Material.Outlined.Adjust : Icons.Material.Outlined.Circle)" Color="@Color.Primary" />
+                </span>
+            </div>
+        </BulletTemplate>
 
+        <ChildContent>
+            @if (Vehicle.Images.Any())
+            {
+                @foreach (var image in Vehicle.Images)
+                {
+                    <!-- Preload images -->
+                    <link rel="preload" href="@image.Link" as="image" />
 
-        }
+                    <MudCarouselItem Transition="Transition.Fade" Color="@Color.Transparent">
+                        <div class="d-flex justify-center">
+                            <MudImage Height="300" Src="@image.Link" FallbackSrc="@_carPlaceholder" Alt="@image.Title" Class="rounded-lg" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Center" />
+                        </div>
+                    </MudCarouselItem>
+                }
+            }
+            else
+            {
+                <MudCarouselItem Transition="Transition.Fade" Color="@Color.Transparent">
+                    <div class="d-flex justify-center">
+                        <MudImage Height="300" Src="@_carPlaceholder" FallbackSrc="@_carPlaceholder" Alt="Placeholder car" Class="rounded-lg" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Center" />
+                    </div>
+                </MudCarouselItem>
+            }
+        </ChildContent>
     </MudCarousel>
-}
 
-
-@if (String.IsNullOrEmpty(Vehicle!.RegistrationNumber))
-{
-    <MudPaper Class="pa-16 ma-2" Elevation="1">
-        <MudText Typo="Typo.h5" GutterBottom="true">Registration does not exist</MudText>
-    </MudPaper>
-}
-else
-{
     <MudStack Row="true" StretchItems="StretchItems.End">
         <MudPaper Class="pa-8 mt-4" Elevation="1" Width="70%" Height="40%">
-            <MudText Typo="Typo.h2">@Vehicle.YearOfManufacture @Vehicle.Make @Vehicle.Model</MudText>
+            <MudText Typo="Typo.h2" Align="Align.Center">@Vehicle.YearOfManufacture @Vehicle.Make @Vehicle.Model</MudText>
             <MudText Typo="Typo.body2">
                 Year  :  @Vehicle.YearOfManufacture <br />
                 Make  :  @Vehicle.Make <br />
@@ -47,13 +57,13 @@ else
             </MudText>
         </MudPaper>
         <MudStack>
-            <MudPaper Class="pa-4 mt-4 mud-success" Elevation="1" Height="50%">
+            <MudPaper Class="pa-4 mt-4 mud-success d-flex flex-column align-center justify-center" Elevation="1" Height="50%">
                 <MudText Align="Align.Center" Typo="Typo.h4"><b>MOT Status</b></MudText>
                 <br />
                 <MudText Align="Align.Center" Typo="Typo.h6">@Vehicle.MotStatus</MudText>
                 <MudText Align="Align.Center" Typo="Typo.body1">Expires: @Vehicle.MotExpiryDate</MudText>
             </MudPaper>
-            <MudPaper Class="pa-4 mud-info" Elevation="1" Height="50%">
+            <MudPaper Class="pa-4 mud-info d-flex flex-column align-center justify-center" Elevation="1" Height="50%">
                 <MudText Align="Align.Center" Typo="Typo.h4"><b>Tax Status</b></MudText>
                 <br />
                 <MudText Align="Align.Center" Typo="Typo.h6">@Vehicle.TaxStatus</MudText>
@@ -61,4 +71,11 @@ else
             </MudPaper>
         </MudStack>
     </MudStack>
+}
+
+@if(_isSearching)
+{
+    <div class="d-flex justify-center pt-4">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+    </div>
 }

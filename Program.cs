@@ -1,7 +1,6 @@
 using MudBlazor.Services;
 using VehicleInformationChecker.Components;
 using VehicleInformationChecker.Components.Services.SearchRegistration;
-using VehicleInformationChecker.Components.Services.SearchRegistrationService;
 
 var builder = WebApplication.CreateBuilder(args);
 

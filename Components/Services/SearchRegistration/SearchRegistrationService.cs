@@ -5,7 +5,7 @@ using VehicleInformationChecker.Components.Models.SearchResponses;
 using VehicleInformationChecker.Components.Models.SearchResponses.ImageSearch;
 using VehicleInformationChecker.Components.Models.SearchResponses.MotSearch;
 
-namespace VehicleInformationChecker.Components.Services.SearchRegistrationService
+namespace VehicleInformationChecker.Components.Services.SearchRegistration
 {
     public sealed class SearchRegistrationService : ISearchRegistrationService
     {
@@ -20,7 +20,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
         private readonly string _motKey;
         private readonly string _motScopeUrl;
         private readonly string _motTokenUrl;
-        private MotAuthToken _motAuthToken = new MotAuthToken();
+        private MotAuthToken _motAuthToken = new();
 
         private readonly string _googleKey;
         private readonly string _googleCx;
@@ -57,12 +57,13 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
                          ?? throw new InvalidOperationException("Google API key not found in configuration.");
             _googleCx = configuration["APIs:Google:Cx"]
                         ?? throw new InvalidOperationException("Google API cx not found in configuration.");
-
-            // TODO: Should this be loaded from a different file?
         }
 
         public async ValueTask<VehicleModel> SearchRegistrationAsync(string registration)
         {
+            if (string.IsNullOrEmpty(registration))
+                return new VehicleModel();
+
             // Setup search tasks
             var vesTask = SearchVesAsync(registration);
             var motTask = SearchMotAsync(registration);
@@ -75,14 +76,11 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
             var motSearchResponse = await motTask;
 
             if (string.IsNullOrEmpty(vesSearchResponse.RegistrationNumber) || string.IsNullOrEmpty(vesSearchResponse.RegistrationNumber))
-                // TODO: Should use try catch instead for proper error handling
+                // Failed to get data from one of the APIs
                 return new VehicleModel();
 
             // Image search
             var imageSearchResponse = await SearchImagesAsync($"{vesSearchResponse.Colour} {vesSearchResponse.YearOfManufacture} {vesSearchResponse.Make} {motSearchResponse.Model}");
-            if (imageSearchResponse?.Items == null || imageSearchResponse.Items.Count == 0)
-                // TODO: Should have placeholder image if none found
-                return new VehicleModel();
 
             return MapResponses(vesSearchResponse, motSearchResponse, imageSearchResponse); ;
         }
@@ -184,7 +182,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
             return response;
         }
 
-        private static VehicleModel MapResponses(VesSearchResponse vesSearchResponse, MotSearchResponse motSearchResponse, ImageSearchResponse imageSearchResponse)
+        private static VehicleModel MapResponses(VesSearchResponse vesSearchResponse, MotSearchResponse motSearchResponse, ImageSearchResponse? imageSearchResponse)
         {
             var textInfo = CultureInfo.CurrentCulture.TextInfo;
 
@@ -192,8 +190,8 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
             {
                 RegistrationNumber = vesSearchResponse.RegistrationNumber,
                 YearOfManufacture = vesSearchResponse.YearOfManufacture,
-                Make = textInfo.ToTitleCase(vesSearchResponse.Make.ToLower()),
-                Model = textInfo.ToTitleCase(motSearchResponse.Model.ToLower()),
+                Make = vesSearchResponse.Make.Length > 3 ? textInfo.ToTitleCase(vesSearchResponse.Make.ToLower()): vesSearchResponse.Make,
+                Model = motSearchResponse.Model.Length > 3 ? textInfo.ToTitleCase(motSearchResponse.Model.ToLower()): motSearchResponse.Model,
                 Colour = textInfo.ToTitleCase(vesSearchResponse.Colour.ToLower()),
                 EngineCapacity = $"{vesSearchResponse.EngineCapacity} cc",
                 FuelType = textInfo.ToTitleCase(vesSearchResponse.FuelType.ToLower()),
@@ -205,7 +203,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistrationServic
                                     null,
                 DateOfLastV5CIssued = DateOnly.ParseExact(vesSearchResponse.DateOfLastV5CIssued, "yyyy-MM-dd"),
                 MonthOfFirstRegistration = DateOnly.ParseExact(vesSearchResponse.MonthOfFirstRegistration, "yyyy-MM"),
-                Images = imageSearchResponse.Items ?? []
+                Images = imageSearchResponse?.Items ?? []
             };
         }
     }

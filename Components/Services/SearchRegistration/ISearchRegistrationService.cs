@@ -1,6 +1,6 @@
 ﻿using VehicleInformationChecker.Components.Models;
 
-namespace VehicleInformationChecker.Components.Services.SearchRegistrationService
+namespace VehicleInformationChecker.Components.Services.SearchRegistration
 {
     public interface ISearchRegistrationService
     {
