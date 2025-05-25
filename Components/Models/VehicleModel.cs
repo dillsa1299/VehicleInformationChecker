@@ -22,5 +22,6 @@ namespace VehicleInformationChecker.Components.Models
         public DateOnly MonthOfFirstRegistration { get; set; }
 
         public List<ImageSearchItem> Images { get; set; } = [];
+        public string AiSummary { get; set; } = String.Empty;
     }
 }

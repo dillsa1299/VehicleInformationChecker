@@ -1,5 +1,6 @@
 ﻿using MudBlazor;
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using VehicleInformationChecker.Components.Models;
@@ -26,6 +27,9 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
 
         private readonly string _googleKey;
         private readonly string _googleCx;
+
+        private readonly string _geminiUrl;
+        private readonly string _geminiKey;
 
         private readonly JsonSerializerOptions _jsonSerializerOptions = new()
         {
@@ -59,6 +63,11 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                          ?? throw new InvalidOperationException("Google API key not found in configuration.");
             _googleCx = configuration["APIs:Google:Cx"]
                         ?? throw new InvalidOperationException("Google API cx not found in configuration.");
+
+            _geminiUrl = configuration["APIs:Gemini:URL"]
+                         ?? throw new InvalidOperationException("Gemini API URL not found in configuration.");
+            _geminiKey = configuration["APIs:Gemini:Key"]
+                         ?? throw new InvalidOperationException("Gemini API key not found in configuration.");
         }
 
         public async ValueTask<VehicleModel> SearchRegistrationAsync(string registration)
@@ -84,7 +93,10 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             // Image search
             var imageSearchResponse = await SearchImagesAsync($"{vesSearchResponse.Colour} {vesSearchResponse.YearOfManufacture} {vesSearchResponse.Make} {motSearchResponse.Model}");
 
-            return MapResponses(vesSearchResponse, motSearchResponse, imageSearchResponse); ;
+            // AI Summary
+            var aiSummary = await SearchGemini(vesSearchResponse, motSearchResponse);
+
+            return MapResponses(vesSearchResponse, motSearchResponse, imageSearchResponse, aiSummary); ;
         }
 
         private async ValueTask<VesSearchResponse> SearchVesAsync(string registration)
@@ -184,7 +196,53 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             return response;
         }
 
-        private static VehicleModel MapResponses(VesSearchResponse vesSearchResponse, MotSearchResponse motSearchResponse, ImageSearchResponse? imageSearchResponse)
+        private async Task<string> SearchGemini(VesSearchResponse ves, MotSearchResponse mot)
+        {
+
+            // Build a summary string of the vehicle
+            var sb = new StringBuilder();
+            sb.AppendLine($"Year: {ves.YearOfManufacture}");
+            sb.AppendLine($"Make: {mot.Make}");
+            sb.AppendLine($"Model: {mot.Model}");
+            sb.AppendLine($"Fuel Type: {mot.FuelType}");
+            sb.AppendLine($"Engine Capacity: {ves.EngineCapacity}");
+
+            var vehicleDetails = sb.ToString().Replace("\"", "'");
+
+            var jsonBody = $@"
+            {{
+                ""contents"": [
+                    {{
+                        ""parts"": [
+                            {{
+                                ""text"": ""Give a summary of the following UK registered vehicle, including performance metrics and providing additional
+                                            details when possible. I don't want an introduction or markup. This information is already displayed so should not be repeated: {vehicleDetails}""
+                            }}
+                        ]
+                    }}
+                ]
+            }}";
+
+            var requestContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+            HttpResponseMessage response = await _httpClient.PostAsync(_geminiUrl + _geminiKey, requestContent);
+
+            string responseString = await response.Content.ReadAsStringAsync();
+
+            // responseString contains the JSON from the API
+            using var doc = JsonDocument.Parse(responseString);
+
+            // Navigate to candidates[0].content.parts[0].text
+            var text = doc.RootElement
+                .GetProperty("candidates")[0]
+                .GetProperty("content")
+                .GetProperty("parts")[0]
+                .GetProperty("text")
+                .GetString();
+
+            return text ?? String.Empty;
+        }
+
+        private static VehicleModel MapResponses(VesSearchResponse vesSearchResponse, MotSearchResponse motSearchResponse, ImageSearchResponse? imageSearchResponse, string aiSummary)
         {
             var textInfo = CultureInfo.CurrentCulture.TextInfo;
 
@@ -192,8 +250,8 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             {
                 RegistrationNumber = vesSearchResponse.RegistrationNumber,
                 YearOfManufacture = vesSearchResponse.YearOfManufacture,
-                Make = vesSearchResponse.Make.Length > 3 ? textInfo.ToTitleCase(vesSearchResponse.Make.ToLower()): vesSearchResponse.Make,
-                Model = motSearchResponse.Model.Length > 3 ? textInfo.ToTitleCase(motSearchResponse.Model.ToLower()): motSearchResponse.Model,
+                Make = vesSearchResponse.Make.Length > 3 ? textInfo.ToTitleCase(vesSearchResponse.Make.ToLower()) : vesSearchResponse.Make,
+                Model = motSearchResponse.Model.Length > 3 ? textInfo.ToTitleCase(motSearchResponse.Model.ToLower()) : motSearchResponse.Model,
                 Colour = textInfo.ToTitleCase(vesSearchResponse.Colour.ToLower()),
                 EngineCapacity = $"{vesSearchResponse.EngineCapacity} cc",
                 FuelType = textInfo.ToTitleCase(vesSearchResponse.FuelType.ToLower()),
@@ -205,7 +263,8 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                                     null,
                 DateOfLastV5CIssued = DateOnly.ParseExact(vesSearchResponse.DateOfLastV5CIssued, "yyyy-MM-dd"),
                 MonthOfFirstRegistration = DateOnly.ParseExact(vesSearchResponse.MonthOfFirstRegistration, "yyyy-MM"),
-                Images = imageSearchResponse?.Items ?? []
+                Images = imageSearchResponse?.Items ?? [],
+                AiSummary = aiSummary
             };
         }
     }

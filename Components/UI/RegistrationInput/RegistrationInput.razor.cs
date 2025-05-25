@@ -17,8 +17,11 @@ namespace VehicleInformationChecker.Components.UI.RegistrationInput
 
         private async Task SearchRegistrationInput()
         {
-            await SearchRegistrationEventService.NotifySearchRegistrationAsync(_registrationInput.Input);
-            StateHasChanged();
+            if (!_registrationInput.Input.Equals(Vehicle.RegistrationNumber, StringComparison.InvariantCultureIgnoreCase))
+            {
+                await SearchRegistrationEventService.NotifySearchRegistrationAsync(_registrationInput.Input);
+                StateHasChanged();
+            }
         }
 
         private Task OnSearchCompleted(VehicleModel vehicle)
