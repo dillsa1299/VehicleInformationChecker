@@ -1,4 +1,11 @@
-﻿@if (!String.IsNullOrEmpty(Vehicle!.RegistrationNumber))
+﻿@if (_isSearching)
+{
+    <div class="d-flex justify-center pt-4">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+    </div>
+}
+
+@if (!String.IsNullOrEmpty(Vehicle!.RegistrationNumber) && !_isSearching)
 {
     <MudCarousel Style="height:300px;" ShowArrows="false" ShowBullets="true" AutoCycle="false" TData="object">
 
@@ -71,11 +78,4 @@
             </MudPaper>
         </MudStack>
     </MudStack>
-}
-
-@if(_isSearching)
-{
-    <div class="d-flex justify-center pt-4">
-        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
-    </div>
 }
