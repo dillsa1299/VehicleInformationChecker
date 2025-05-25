@@ -14,8 +14,8 @@ builder.Services.AddRazorComponents()
 builder.Services.AddHttpClient();
 
 // Register additional services
-builder.Services.AddSingleton<ISearchRegistrationEventService, SearchRegistrationEventService>();
-builder.Services.AddSingleton<ISearchRegistrationService>(provider =>
+builder.Services.AddScoped<ISearchRegistrationEventService, SearchRegistrationEventService>();
+builder.Services.AddScoped<ISearchRegistrationService>(provider =>
 {
     var httpClient = provider.GetRequiredService<HttpClient>();
     var configuration = provider.GetRequiredService<IConfiguration>();
