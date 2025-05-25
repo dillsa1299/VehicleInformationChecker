@@ -1,5 +1,7 @@
-﻿using System.Globalization;
+﻿using MudBlazor;
+using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using VehicleInformationChecker.Components.Models;
 using VehicleInformationChecker.Components.Models.SearchResponses;
 using VehicleInformationChecker.Components.Models.SearchResponses.ImageSearch;
@@ -61,7 +63,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
 
         public async ValueTask<VehicleModel> SearchRegistrationAsync(string registration)
         {
-            if (string.IsNullOrEmpty(registration))
+            if (string.IsNullOrEmpty(registration) || !Regex.IsMatch(registration, @"^[a-zA-Z0-9]{0,7}$"))
                 return new VehicleModel();
 
             // Setup search tasks

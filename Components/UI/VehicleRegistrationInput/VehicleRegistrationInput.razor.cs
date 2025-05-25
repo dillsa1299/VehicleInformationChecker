@@ -1,7 +1,4 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using MudBlazor;
-using System.ComponentModel.DataAnnotations;
 using VehicleInformationChecker.Components.Models;
 using VehicleInformationChecker.Components.Services.SearchRegistration;
 
@@ -16,7 +13,6 @@ namespace VehicleInformationChecker.Components.UI.VehicleRegistrationInput
         public VehicleModel Vehicle { get; set; } = default!;
 
         RegistrationInputModel _registrationInput = new();
-        private readonly IMask _inputMask = new RegexMask(@"^[a-zA-Z0-9]{0,7}$");
         private bool _searchFailed;
 
         private async Task SearchRegistrationInput()
