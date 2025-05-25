@@ -2,37 +2,33 @@
 using VehicleInformationChecker.Components.Models;
 using VehicleInformationChecker.Components.Services.SearchRegistration;
 
-namespace VehicleInformationChecker.Components.UI.VehicleSearchDetails
+namespace VehicleInformationChecker.Components.UI.RegistrationInput
 {
-    public partial class VehicleSearchDetails
+    public partial class RegistrationInput
     {
         [Inject]
         private ISearchRegistrationEventService SearchRegistrationEventService { get; set; } = default!;
 
-        [Inject]
-        private ISearchRegistrationService SearchRegistrationService { get; set; } = default!;
-
         [Parameter]
-        public VehicleModel? Vehicle { get; set; }
+        public VehicleModel Vehicle { get; set; } = default!;
 
-        private readonly string _carPlaceholder = "images/placeholder-car.svg";
-        private bool _isSearching;
+        RegistrationInputModel _registrationInput = new();
+        private bool _searchFailed;
 
-        private Task OnSearchStarted()
+        private async Task SearchRegistrationInput()
         {
-            _isSearching = true;
-            return InvokeAsync(StateHasChanged);
+            await SearchRegistrationEventService.NotifySearchRegistrationAsync(_registrationInput.Input);
+            StateHasChanged();
         }
 
         private Task OnSearchCompleted(VehicleModel vehicle)
         {
-            _isSearching = false;
+            _searchFailed = vehicle.RegistrationNumber == string.Empty;
             return InvokeAsync(StateHasChanged);
         }
 
         protected override Task OnInitializedAsync()
         {
-            SearchRegistrationEventService.OnSearchStarted += () => OnSearchStarted();
             SearchRegistrationEventService.OnSearchCompleted += OnSearchCompleted;
 
             return base.OnInitializedAsync();
@@ -40,8 +36,12 @@ namespace VehicleInformationChecker.Components.UI.VehicleSearchDetails
 
         public void Dispose()
         {
-            SearchRegistrationEventService.OnSearchStarted -= () => OnSearchStarted();
             SearchRegistrationEventService.OnSearchCompleted -= OnSearchCompleted;
+        }
+
+        private class RegistrationInputModel
+        {
+            public string Input { get; set; } = string.Empty;
         }
     }
 }
