@@ -5,8 +5,6 @@
         <EditForm Model="@_registrationInput" OnValidSubmit="SearchRegistrationInput">
             <MudTextField @bind-Value="_registrationInput.Input"
             For="@(() => _registrationInput.Input)"
-            Mask="_inputMask"
-            Clearable="true"
             Error="@_searchFailed"
             Placeholder="NE14 ABJ"
             Adornment="Adornment.End"
