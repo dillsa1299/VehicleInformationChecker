@@ -216,7 +216,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                         ""parts"": [
                             {{
                                 ""text"": ""Give a summary of the following UK registered vehicle, including performance metrics and providing additional
-                                            details when possible. I don't want an introduction or markup. This information is already displayed so should not be repeated: {vehicleDetails}""
+                                            details when possible. I don't want an introduction or any formatting, just plain text. This information is already displayed so should not be repeated: {vehicleDetails}""
                             }}
                         ]
                     }}
