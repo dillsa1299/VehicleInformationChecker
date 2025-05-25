@@ -5,9 +5,11 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudLayout>
-    <MudAppBar Elevation="1" Dense=true>
+    <MudAppBar Elevation="1" Dense="true" WrapContent="false">
         <MudIcon Icon="@(Icons.Material.Filled.DirectionsCar)" Color="Color.Inherit" Size="Size.Large" />
-        <MudText Typo="Typo.h5" Class="ml-3" >Vehicle Information Checker</MudText>
+        <MudText Typo="Typo.h5" Class="ml-3 text-truncate" Style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            Vehicle Information Checker
+        </MudText>
         <MudSpacer />
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" Edge="Edge.End" />
     </MudAppBar>
