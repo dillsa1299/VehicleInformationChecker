@@ -14,7 +14,7 @@ namespace VehicleInformationChecker.Components.Models
         public string FuelType { get; set; } = String.Empty;
 
         public string TaxStatus { get; set; } = String.Empty;
-        public DateOnly TaxDueDate { get; set; }
+        public DateOnly? TaxDueDate { get; set; }
         public string MotStatus { get; set; } = String.Empty;
         public DateOnly? MotExpiryDate { get; set; }
         

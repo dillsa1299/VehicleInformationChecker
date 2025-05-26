@@ -2,5 +2,9 @@
     <MudText Align="Align.Center" Typo="Typo.h4"><b>Tax Status</b></MudText>
     <br />
     <MudText Align="Align.Center" Typo="Typo.h6">@Vehicle?.TaxStatus</MudText>
-    <MudText Align="Align.Center" Typo="Typo.body1">Expires: @Vehicle?.TaxDueDate</MudText>
+
+    @if (Vehicle?.TaxDueDate != null)
+    {
+        <MudText Align="Align.Center" Typo="Typo.body1">Expires: @Vehicle?.TaxDueDate</MudText>
+    }
 </MudPaper>

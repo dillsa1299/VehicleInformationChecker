@@ -23,6 +23,9 @@ namespace VehicleInformationChecker.Components.UI.TaxStatus
                 case "untaxed":
                     _style = "background-color: var(--mud-palette-error);";
                     break;
+                case "sorn":
+                    _style = "background-color: var(--mud-palette-warning);";
+                    break;
                 default:
                     _style = "background-color: var(--mud-palette-gray-default);";
                     break;

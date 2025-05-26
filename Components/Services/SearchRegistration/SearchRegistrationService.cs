@@ -193,6 +193,14 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             var url = $"https://www.googleapis.com/customsearch/v1?q={Uri.EscapeDataString(query)}&cx={_googleCx}&key={_googleKey}&searchType=image";
             var response = await _httpClient.GetFromJsonAsync<ImageSearchResponse>(url);
 
+            if (response?.Items != null)
+            {
+                for (int i = 0; i < response.Items.Count; i++)
+                {
+                    response.Items[i].Index = i + 1; // Set index starting from 1
+                }
+            }
+
             return response;
         }
 
@@ -256,7 +264,9 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                 EngineCapacity = $"{vesSearchResponse.EngineCapacity} cc",
                 FuelType = textInfo.ToTitleCase(vesSearchResponse.FuelType.ToLower()),
                 TaxStatus = vesSearchResponse.TaxStatus,
-                TaxDueDate = DateOnly.ParseExact(vesSearchResponse.TaxDueDate, "yyyy-MM-dd"),
+                TaxDueDate = !String.IsNullOrEmpty(vesSearchResponse.TaxDueDate) ?
+                                    DateOnly.ParseExact(vesSearchResponse.TaxDueDate, "yyyy-MM-dd") :
+                                    null,
                 MotStatus = vesSearchResponse.MotStatus,
                 MotExpiryDate = !String.IsNullOrEmpty(vesSearchResponse.MotExpiryDate) ?
                                     DateOnly.ParseExact(vesSearchResponse.MotExpiryDate, "yyyy-MM-dd") :
