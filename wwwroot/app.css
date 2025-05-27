@@ -1,0 +1,12 @@
+﻿.responsive-title {
+    font-size: clamp(1rem, 5vw, 2rem);
+}
+
+.responsive-registration input[type="text"] {
+    font-size: clamp(2rem, 10vw, 4rem);
+}
+
+.text-upper input {
+    text-transform: uppercase;
+}
+

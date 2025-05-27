@@ -9,53 +9,62 @@
 
 @if (!String.IsNullOrEmpty(Vehicle!.RegistrationNumber) && !_isSearching)
 {
-    <MudCarousel Style="height:300px;" ShowArrows="true" ShowBullets="false" AutoCycle="false" TData="object">
-        <PreviousButtonTemplate>
-            <div Class="mud-button-root mud-icon-button mud-icon-button-color-inherit mud-ripple mud-ripple-icon">
-                <span class="mud-icon-button-label">
-                    <MudIcon Class="mud-ripple mud-ripple-icon mud-icon-button-size-large" Icon="@Icons.Material.Filled.KeyboardArrowLeft" Color="@Color.Primary" Size="@Size.Large" />
-                </span>
-            </div>
-        </PreviousButtonTemplate>
-        <NextButtonTemplate>
-            <div Class="mud-button-root mud-icon-button mud-icon-button-color-inherit mud-ripple mud-ripple-icon">
-                <span class="mud-icon-button-label">
-                    <MudIcon Class="mud-ripple mud-ripple-icon mud-icon-button-size-medium" Icon="@Icons.Material.Filled.KeyboardArrowRight" Color="@Color.Primary" Size="@Size.Large" />
-                </span>
-            </div>
-        </NextButtonTemplate>
+    @if (_isAdditionalSearching)
+    {
+        <div class="d-flex justify-center">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="40%" Height="300px"/>
+        </div>
+    }
+    else
+    {
+        <MudCarousel Style="height:300px;" ShowArrows="true" ShowBullets="false" AutoCycle="false" TData="object">
+            <PreviousButtonTemplate>
+                <div Class="mud-button-root mud-icon-button mud-icon-button-color-inherit mud-ripple mud-ripple-icon">
+                    <span class="mud-icon-button-label">
+                        <MudIcon Class="mud-ripple mud-ripple-icon mud-icon-button-size-large" Icon="@Icons.Material.Filled.KeyboardArrowLeft" Color="@Color.Primary" Size="@Size.Large" />
+                    </span>
+                </div>
+            </PreviousButtonTemplate>
+            <NextButtonTemplate>
+                <div Class="mud-button-root mud-icon-button mud-icon-button-color-inherit mud-ripple mud-ripple-icon">
+                    <span class="mud-icon-button-label">
+                        <MudIcon Class="mud-ripple mud-ripple-icon mud-icon-button-size-medium" Icon="@Icons.Material.Filled.KeyboardArrowRight" Color="@Color.Primary" Size="@Size.Large" />
+                    </span>
+                </div>
+            </NextButtonTemplate>
 
-        <ChildContent>
-            @if (Vehicle.Images.Any())
-            {
-                @foreach (var image in Vehicle.Images)
+            <ChildContent>
+                @if (Vehicle.Images.Any())
                 {
-                    // Preload images
-                    <link rel="preload" href="@image.Link" as="image" />
+                    @foreach (var image in Vehicle.Images)
+                    {
+                        // Preload images
+                        <link rel="preload" href="@image.Link" as="image" />
 
-                    <MudCarouselItem Transition="Transition.Fade" Color="@Color.Transparent">
-                        <div class="d-flex justify-center">
-                            <div style="position:relative; display:inline-block; width:100%; height:300px;">
-                                <MudImage Height="300" Style="max-width:100%; width:100%;" Src="@image.Link" FallbackSrc="@_carPlaceholder" Alt="@image.Title" Class="rounded-lg" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Center" />
-                                <div style="position:absolute; bottom:4px; left:50%; transform:translateX(-50%); color:white; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:16px;">
-                                    <MudText>@image.Index / @Vehicle.Images.Count</MudText>
+                        <MudCarouselItem Transition="Transition.Fade" Color="@Color.Transparent">
+                            <div class="d-flex justify-center">
+                                <div style="position:relative; display:inline-block; width:100%; height:300px;">
+                                    <MudImage Height="300" Style="max-width:100%; width:100%;" Src="@image.Link" FallbackSrc="@_carPlaceholder" Alt="@image.Title" Class="rounded-lg" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Center" />
+                                    <div style="position:absolute; bottom:4px; left:50%; transform:translateX(-50%); color:white; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:16px;">
+                                        <MudText>@image.Index / @Vehicle.Images.Count()</MudText>
+                                    </div>
                                 </div>
                             </div>
+                        </MudCarouselItem>
+                    }
+                }
+                else
+                {
+                    // Placeholder image if no images are available
+                    <MudCarouselItem Transition="Transition.Fade" Color="@Color.Transparent">
+                        <div class="d-flex justify-center">
+                            <MudImage Height="300" Src="@_carPlaceholder" FallbackSrc="@_carPlaceholder" Alt="Placeholder car" Class="rounded-lg" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Center" />
                         </div>
                     </MudCarouselItem>
                 }
-            }
-            else
-            {
-                // Placeholder image if no images are available
-                <MudCarouselItem Transition="Transition.Fade" Color="@Color.Transparent">
-                    <div class="d-flex justify-center">
-                        <MudImage Height="300" Src="@_carPlaceholder" FallbackSrc="@_carPlaceholder" Alt="Placeholder car" Class="rounded-lg" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Center" />
-                    </div>
-                </MudCarouselItem>
-            }
-        </ChildContent>
-    </MudCarousel>
+            </ChildContent>
+        </MudCarousel>
+    }
 
     <MudGrid Class="mt-4">
         <MudItem xs="12" md="8">
@@ -63,10 +72,20 @@
                 <MudText Typo="Typo.h3" Align="Align.Center">@Vehicle.YearOfManufacture @Vehicle.Make @Vehicle.Model</MudText>
 
                 <MudText Typo="Typo.h4">AI Summary</MudText>
-                <MudText Typo="Typo.body2">
-                    @Vehicle.AiSummary <br />
-                    <br />
-                </MudText>
+                @if (_isAdditionalSearching)
+                {
+                    <MudSkeleton />
+                    <MudSkeleton />
+                    <MudSkeleton />
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2">
+                        @Vehicle.AiSummary <br />
+                        <br />
+                    </MudText>
+                }
+                
 
                 <MudText Typo="Typo.h4">Details</MudText>
                 <MudText Typo="Typo.body2">

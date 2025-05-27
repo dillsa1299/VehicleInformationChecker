@@ -9,30 +9,31 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
         [Inject]
         private ISearchRegistrationEventService SearchRegistrationEventService { get; set; } = default!;
 
-        [Inject]
-        private ISearchRegistrationService SearchRegistrationService { get; set; } = default!;
-
         [Parameter]
         public VehicleModel? Vehicle { get; set; }
 
         private readonly string _carPlaceholder = "images/placeholder-car.svg";
         private bool _isSearching;
+        private bool _isAdditionalSearching;
 
-        private Task OnSearchStarted()
+        private Task OnSearchStarted(bool isAdditionalSearch)
         {
-            _isSearching = true;
+            _isSearching = !isAdditionalSearch;
+            _isAdditionalSearching = isAdditionalSearch;
+
             return InvokeAsync(StateHasChanged);
         }
 
         private Task OnSearchCompleted(VehicleModel vehicle)
         {
             _isSearching = false;
+            _isAdditionalSearching = false;
             return InvokeAsync(StateHasChanged);
         }
 
         protected override Task OnInitializedAsync()
         {
-            SearchRegistrationEventService.OnSearchStarted += () => OnSearchStarted();
+            SearchRegistrationEventService.OnSearchStarted += OnSearchStarted;
             SearchRegistrationEventService.OnSearchCompleted += OnSearchCompleted;
 
             return base.OnInitializedAsync();
@@ -40,7 +41,7 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
 
         public void Dispose()
         {
-            SearchRegistrationEventService.OnSearchStarted -= () => OnSearchStarted();
+            SearchRegistrationEventService.OnSearchStarted -= OnSearchStarted;
             SearchRegistrationEventService.OnSearchCompleted -= OnSearchCompleted;
         }
     }

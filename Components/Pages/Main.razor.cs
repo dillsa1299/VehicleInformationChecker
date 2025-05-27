@@ -16,7 +16,16 @@ namespace VehicleInformationChecker.Components.Pages
 
         private async Task SearchRegistration(string registration)
         {
-            _vehicle = await SearchRegistrationService.SearchRegistrationAsync(registration);
+            _vehicle = await SearchRegistrationService.SearchVehicleDetailsAsync(registration);
+            await SearchRegistrationEventService.NotifySearchCompleted(_vehicle);
+            StateHasChanged();
+            await AdditionalSearch(_vehicle);
+        }
+
+        private async Task AdditionalSearch(VehicleModel vehicle)
+        {
+            await SearchRegistrationEventService.NotifySearchStarted(true);
+            _vehicle = await SearchRegistrationService.SearchVehicleAdditionalDetailsAsync(vehicle);
             await SearchRegistrationEventService.NotifySearchCompleted(_vehicle);
             StateHasChanged();
         }
@@ -24,7 +33,6 @@ namespace VehicleInformationChecker.Components.Pages
         protected override Task OnInitializedAsync()
         {
             SearchRegistrationEventService.OnSearchRegistration += SearchRegistration;
-
             return base.OnInitializedAsync();
         }
 

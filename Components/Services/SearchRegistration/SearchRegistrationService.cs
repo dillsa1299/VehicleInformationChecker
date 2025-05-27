@@ -1,5 +1,4 @@
-﻿using MudBlazor;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -70,7 +69,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                          ?? throw new InvalidOperationException("Gemini API key not found in configuration.");
         }
 
-        public async ValueTask<VehicleModel> SearchRegistrationAsync(string registration)
+        public async Task<VehicleModel> SearchVehicleDetailsAsync(string registration)
         {
             if (string.IsNullOrEmpty(registration) || !Regex.IsMatch(registration, @"^[a-zA-Z0-9]{0,7}$"))
                 return new VehicleModel();
@@ -90,13 +89,11 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                 // Failed to get data from one of the APIs
                 return new VehicleModel();
 
-            // Image search
-            var imageSearchResponse = await SearchImagesAsync($"{vesSearchResponse.Colour} {vesSearchResponse.YearOfManufacture} {vesSearchResponse.Make} {motSearchResponse.Model}");
+            VehicleModel vehicleModel = new();
 
-            // AI Summary
-            var aiSummary = await SearchGemini(vesSearchResponse, motSearchResponse);
+            MapResponses(vehicleModel, vesSearchResponse, motSearchResponse, null, null);
 
-            return MapResponses(vesSearchResponse, motSearchResponse, imageSearchResponse, aiSummary); ;
+            return vehicleModel;
         }
 
         private async ValueTask<VesSearchResponse> SearchVesAsync(string registration)
@@ -148,7 +145,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             return parsedResponse ?? new MotSearchResponse();
         }
 
-        public async Task<bool> GetMotTokenAsync()
+        private async Task<bool> GetMotTokenAsync()
         {
             // Check if token is still valid
             if (_motAuthToken.ExpireTime > DateTime.UtcNow) return true;
@@ -188,58 +185,69 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             return true;
         }
 
-        public async Task<ImageSearchResponse?> SearchImagesAsync(string query)
+        public async Task<VehicleModel> SearchVehicleAdditionalDetailsAsync(VehicleModel vehicleModel)
+        {
+            var query = $"{vehicleModel.Colour} {vehicleModel.YearOfManufacture} {vehicleModel.Make} {vehicleModel.Model}";
+            var imageSearchResponse = await SearchImagesAsync(query);
+
+            var prompt = $"Give a summary of the following UK registered vehicle, including performance metrics and providing additional details when possible. " +
+                         $"This information is already displayed so should not be repeated: Year: {vehicleModel.YearOfManufacture}, " +
+                         $"Make: {vehicleModel.Make}, Model: {vehicleModel.Model}, Fuel Type: {vehicleModel.FuelType}, " +
+                         $"Engine Capacity: {vehicleModel.EngineCapacity}";
+            var aiSummary = await SearchGeminiAsync(prompt);
+
+            return MapResponses(vehicleModel, null,  null, imageSearchResponse, aiSummary);
+        }
+
+        private async Task<ImageSearchResponse?> SearchImagesAsync(string query)
         {
             var url = $"https://www.googleapis.com/customsearch/v1?q={Uri.EscapeDataString(query)}&cx={_googleCx}&key={_googleKey}&searchType=image";
             var response = await _httpClient.GetFromJsonAsync<ImageSearchResponse>(url);
 
             if (response?.Items != null)
             {
-                for (int i = 0; i < response.Items.Count; i++)
+                int index = 1; // Initialize index starting from 1
+                foreach (var item in response.Items)
                 {
-                    response.Items[i].Index = i + 1; // Set index starting from 1
+                    item.Index = index++; // Increment index for each item
                 }
             }
 
             return response;
         }
 
-        private async Task<string> SearchGemini(VesSearchResponse ves, MotSearchResponse mot)
+        private async Task<string> SearchGeminiAsync(string prompt)
         {
-
-            // Build a summary string of the vehicle
-            var sb = new StringBuilder();
-            sb.AppendLine($"Year: {ves.YearOfManufacture}");
-            sb.AppendLine($"Make: {mot.Make}");
-            sb.AppendLine($"Model: {mot.Model}");
-            sb.AppendLine($"Fuel Type: {mot.FuelType}");
-            sb.AppendLine($"Engine Capacity: {ves.EngineCapacity}");
-
-            var vehicleDetails = sb.ToString().Replace("\"", "'");
-
-            var jsonBody = $@"
-            {{
-                ""contents"": [
-                    {{
-                        ""parts"": [
-                            {{
-                                ""text"": ""Give a summary of the following UK registered vehicle, including performance metrics and providing additional
-                                            details when possible. I don't want an introduction or any formatting, just plain text. This information is already displayed so should not be repeated: {vehicleDetails}""
-                            }}
-                        ]
-                    }}
-                ]
-            }}";
+            var geminiRequest = new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new[]
+                        {
+                            new
+                            {
+                                text = prompt
+                            }
+                        }
+                    }
+                }
+            };
+            var jsonBody = JsonSerializer.Serialize(geminiRequest);
 
             var requestContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
             HttpResponseMessage response = await _httpClient.PostAsync(_geminiUrl + _geminiKey, requestContent);
+
+            if (!response.IsSuccessStatusCode)
+                return String.Empty;
 
             string responseString = await response.Content.ReadAsStringAsync();
 
             // responseString contains the JSON from the API
             using var doc = JsonDocument.Parse(responseString);
 
-            // Navigate to candidates[0].content.parts[0].text
+            // Grab only the text from the response, the rest is information we don't need
             var text = doc.RootElement
                 .GetProperty("candidates")[0]
                 .GetProperty("content")
@@ -250,32 +258,54 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             return text ?? String.Empty;
         }
 
-        private static VehicleModel MapResponses(VesSearchResponse vesSearchResponse, MotSearchResponse motSearchResponse, ImageSearchResponse? imageSearchResponse, string aiSummary)
+        private static VehicleModel MapResponses(
+            VehicleModel? vehicleModel,
+            VesSearchResponse? vesSearchResponse,
+            MotSearchResponse? motSearchResponse,
+            ImageSearchResponse? imageSearchResponse,
+            string? aiSummary)
         {
-            var textInfo = CultureInfo.CurrentCulture.TextInfo;
+            vehicleModel ??= new VehicleModel();
 
-            return new VehicleModel
+            if (vesSearchResponse != null)
             {
-                RegistrationNumber = vesSearchResponse.RegistrationNumber,
-                YearOfManufacture = vesSearchResponse.YearOfManufacture,
-                Make = vesSearchResponse.Make.Length > 3 ? textInfo.ToTitleCase(vesSearchResponse.Make.ToLower()) : vesSearchResponse.Make,
-                Model = motSearchResponse.Model.Length > 3 ? textInfo.ToTitleCase(motSearchResponse.Model.ToLower()) : motSearchResponse.Model,
-                Colour = textInfo.ToTitleCase(vesSearchResponse.Colour.ToLower()),
-                EngineCapacity = $"{vesSearchResponse.EngineCapacity} cc",
-                FuelType = textInfo.ToTitleCase(vesSearchResponse.FuelType.ToLower()),
-                TaxStatus = vesSearchResponse.TaxStatus,
-                TaxDueDate = !String.IsNullOrEmpty(vesSearchResponse.TaxDueDate) ?
-                                    DateOnly.ParseExact(vesSearchResponse.TaxDueDate, "yyyy-MM-dd") :
-                                    null,
-                MotStatus = vesSearchResponse.MotStatus,
-                MotExpiryDate = !String.IsNullOrEmpty(vesSearchResponse.MotExpiryDate) ?
-                                    DateOnly.ParseExact(vesSearchResponse.MotExpiryDate, "yyyy-MM-dd") :
-                                    null,
-                DateOfLastV5CIssued = DateOnly.ParseExact(vesSearchResponse.DateOfLastV5CIssued, "yyyy-MM-dd"),
-                MonthOfFirstRegistration = DateOnly.ParseExact(vesSearchResponse.MonthOfFirstRegistration, "yyyy-MM"),
-                Images = imageSearchResponse?.Items ?? [],
-                AiSummary = aiSummary
-            };
+                vehicleModel.RegistrationNumber = vesSearchResponse.RegistrationNumber ?? string.Empty;
+                vehicleModel.YearOfManufacture = vesSearchResponse.YearOfManufacture;
+                vehicleModel.Make = FormatName(vesSearchResponse.Make);
+                vehicleModel.Colour = FormatName(vesSearchResponse.Colour);
+                vehicleModel.EngineCapacity = $"{vesSearchResponse.EngineCapacity} cc";
+                vehicleModel.FuelType = FormatName(vesSearchResponse.FuelType);
+                vehicleModel.TaxStatus = vesSearchResponse.TaxStatus ?? string.Empty;
+                vehicleModel.MotStatus = vesSearchResponse.MotStatus ?? string.Empty;
+
+                vehicleModel.MotExpiryDate = DateOnlyTryParse(vesSearchResponse.MotExpiryDate, "yyyy-MM-dd");
+                vehicleModel.DateOfLastV5CIssued = DateOnlyTryParse(vesSearchResponse.DateOfLastV5CIssued, "yyyy-MM-dd") ?? default;
+                vehicleModel.MonthOfFirstRegistration = DateOnlyTryParse(vesSearchResponse.MonthOfFirstRegistration, "yyyy-MM") ?? default;
+                vehicleModel.TaxDueDate = DateOnlyTryParse(vesSearchResponse.TaxDueDate, "yyyy-MM-dd");
+            }
+
+            if (motSearchResponse != null)
+            {
+                vehicleModel.Model = FormatName(motSearchResponse.Model);
+                vehicleModel.MotTests = motSearchResponse.MotTests ?? Enumerable.Empty<MotTest>();
+            }
+
+            vehicleModel.Images = imageSearchResponse?.Items ?? Enumerable.Empty<ImageSearchItem>();
+            vehicleModel.AiSummary = aiSummary ?? string.Empty;
+
+            return vehicleModel;
+
+            // Helper for title-casing with length check
+            static string FormatName(string? value) =>
+                !string.IsNullOrWhiteSpace(value)
+                    ? (value.Length > 3 ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(value.ToLower()) : value)
+                    : string.Empty;
+
+            // Local helper for safe date parsing
+            static DateOnly? DateOnlyTryParse(string? value, string format)
+                => !string.IsNullOrWhiteSpace(value) && DateOnly.TryParseExact(value, format, out var date)
+                    ? date
+                    : null;
         }
     }
 }

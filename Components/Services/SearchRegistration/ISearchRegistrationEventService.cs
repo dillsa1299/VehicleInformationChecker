@@ -17,6 +17,12 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
         public delegate Task SearchCompletedEvent(VehicleModel vehicle);
 
         /// <summary>
+        /// Search completed event delegate
+        /// </summary>
+        /// <returns><see cref="Task"/></returns>
+        public delegate Task SearchStartedEvent(bool isAdditionalSearch);
+
+        /// <summary>
         /// Event for searching a registration
         /// </summary>
         event SearchRegistrationEvent OnSearchRegistration;
@@ -24,7 +30,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
         /// <summary>
         /// Event for when a search is started
         /// </summary>
-        event Action OnSearchStarted;
+        event SearchStartedEvent OnSearchStarted;
 
         /// <summary>
         /// Event for when a search is completed
@@ -39,12 +45,12 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
         Task NotifySearchRegistrationAsync(string registration);
 
         /// <summary>
-        /// Triggers any event listeners when a registration search has started
+        /// Triggers any event listeners when a search has started
         /// </summary>
-        Task NotifySearchStarted();
+        Task NotifySearchStarted(bool isAdditionalSearch);
 
         /// <summary>
-        /// Triggers any event listeners when a registration search has completed
+        /// Triggers any event listeners when a search has completed
         /// </summary>
         /// <param name="vehicle"><see cref="VehicleModel"/></param>
         Task NotifySearchCompleted(VehicleModel vehicle);

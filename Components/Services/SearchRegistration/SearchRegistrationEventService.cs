@@ -7,7 +7,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
     public sealed class SearchRegistrationEventService : ISearchRegistrationEventService
     {
         private event ISearchRegistrationEventService.SearchRegistrationEvent? _onSearchRegistration;
-        private event Action? _onSearchStarted;
+        private event ISearchRegistrationEventService.SearchStartedEvent? _onSearchStarted;
         private event ISearchRegistrationEventService.SearchCompletedEvent? _onSearchComplete;
 
         event ISearchRegistrationEventService.SearchRegistrationEvent ISearchRegistrationEventService.OnSearchRegistration
@@ -16,7 +16,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             remove => _onSearchRegistration -= value;
         }
 
-        event Action ISearchRegistrationEventService.OnSearchStarted
+        event ISearchRegistrationEventService.SearchStartedEvent ISearchRegistrationEventService.OnSearchStarted
         {
             add => _onSearchStarted += value;
             remove => _onSearchStarted -= value;
@@ -30,16 +30,15 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
 
         public Task NotifySearchRegistrationAsync(string registration)
         {
-            _onSearchStarted?.Invoke();
+            _onSearchStarted?.Invoke(false);
             var task = _onSearchRegistration?.Invoke(registration);
 
             return task ?? Task.CompletedTask;
         }
 
-        public Task NotifySearchStarted()
+        public Task NotifySearchStarted(bool isAdditionalSearch)
         {
-            _onSearchStarted?.Invoke();
-
+            _onSearchStarted?.Invoke(isAdditionalSearch);
             return Task.CompletedTask;
         }
 

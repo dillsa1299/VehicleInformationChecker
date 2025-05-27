@@ -2,6 +2,6 @@
 {
     public class ImageSearchResponse
     {
-        public List<ImageSearchItem>? Items { get; set; }
+        public IEnumerable<ImageSearchItem>? Items { get; set; }
     }
 }

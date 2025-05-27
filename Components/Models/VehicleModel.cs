@@ -1,4 +1,5 @@
 ﻿using VehicleInformationChecker.Components.Models.SearchResponses.ImageSearch;
+using VehicleInformationChecker.Components.Models.SearchResponses.MotSearch;
 
 namespace VehicleInformationChecker.Components.Models
 {
@@ -17,11 +18,12 @@ namespace VehicleInformationChecker.Components.Models
         public DateOnly? TaxDueDate { get; set; }
         public string MotStatus { get; set; } = String.Empty;
         public DateOnly? MotExpiryDate { get; set; }
-        
+        public IEnumerable<MotTest> MotTests { get; set; } = [];
+
         public DateOnly DateOfLastV5CIssued { get; set; }
         public DateOnly MonthOfFirstRegistration { get; set; }
 
-        public List<ImageSearchItem> Images { get; set; } = [];
+        public IEnumerable<ImageSearchItem> Images { get; set; } = [];
         public string AiSummary { get; set; } = String.Empty;
     }
 }
