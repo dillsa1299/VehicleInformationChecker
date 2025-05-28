@@ -13,21 +13,43 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
         public VehicleModel? Vehicle { get; set; }
 
         private readonly string _carPlaceholder = "images/placeholder-car.svg";
-        private bool _isSearching;
-        private bool _isAdditionalSearching;
+        private bool _isSearchingDetails;
+        private bool _isSearchingImages;
+        private bool _isSearchingAiSummary;
 
-        private Task OnSearchStarted(bool isAdditionalSearch)
+        private Task OnSearchStarted(SearchType searchType)
         {
-            _isSearching = !isAdditionalSearch;
-            _isAdditionalSearching = isAdditionalSearch;
+            switch (searchType)
+            {
+                case SearchType.Details:
+                    _isSearchingDetails = true;
+                    break;
+                case SearchType.Images:
+                    _isSearchingImages = true;
+                    break;
+                case SearchType.AiSummary:
+                    _isSearchingAiSummary = true;
+                    break;
+            }
 
             return InvokeAsync(StateHasChanged);
         }
 
-        private Task OnSearchCompleted(VehicleModel vehicle)
+        private Task OnSearchCompleted(VehicleModel vehicle, SearchType searchType)
         {
-            _isSearching = false;
-            _isAdditionalSearching = false;
+            switch (searchType)
+            {
+                case SearchType.Details:
+                    _isSearchingDetails = false;
+                    break;
+                case SearchType.Images:
+                    _isSearchingImages = false;
+                    break;
+                case SearchType.AiSummary:
+                    _isSearchingAiSummary = false;
+                    break;
+            }
+
             return InvokeAsync(StateHasChanged);
         }
 

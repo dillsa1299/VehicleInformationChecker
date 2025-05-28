@@ -6,14 +6,14 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
 {
     public sealed class SearchRegistrationEventService : ISearchRegistrationEventService
     {
-        private event ISearchRegistrationEventService.SearchRegistrationEvent? _onSearchRegistration;
+        private event ISearchRegistrationEventService.SearchVehicleEvent? _onSearchVehicle;
         private event ISearchRegistrationEventService.SearchStartedEvent? _onSearchStarted;
         private event ISearchRegistrationEventService.SearchCompletedEvent? _onSearchComplete;
 
-        event ISearchRegistrationEventService.SearchRegistrationEvent ISearchRegistrationEventService.OnSearchRegistration
+        event ISearchRegistrationEventService.SearchVehicleEvent ISearchRegistrationEventService.OnSearchVehicle
         {
-            add => _onSearchRegistration += value;
-            remove => _onSearchRegistration -= value;
+            add => _onSearchVehicle += value;
+            remove => _onSearchVehicle -= value;
         }
 
         event ISearchRegistrationEventService.SearchStartedEvent ISearchRegistrationEventService.OnSearchStarted
@@ -28,30 +28,29 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             remove => _onSearchComplete -= value;
         }
 
-        public Task NotifySearchRegistrationAsync(string registration)
+        public Task NotifySearchVehicleAsync(string registration)
         {
-            _onSearchStarted?.Invoke(false);
-            var task = _onSearchRegistration?.Invoke(registration);
+            var task = _onSearchVehicle?.Invoke(registration);
 
             return task ?? Task.CompletedTask;
         }
 
-        public Task NotifySearchStarted(bool isAdditionalSearch)
+        public Task NotifySearchStarted(SearchType searchType)
         {
-            _onSearchStarted?.Invoke(isAdditionalSearch);
+            _onSearchStarted?.Invoke(searchType);
             return Task.CompletedTask;
         }
 
-        public Task NotifySearchCompleted(VehicleModel vehicle)
+        public Task NotifySearchCompleted(VehicleModel vehicle, SearchType searchType)
         {
-            var task = _onSearchComplete?.Invoke(vehicle);
+            var task = _onSearchComplete?.Invoke(vehicle, searchType);
 
             return task ?? Task.CompletedTask;
         }
 
         public void Dispose()
         {
-            _onSearchRegistration = null;
+            _onSearchVehicle = null;
             _onSearchStarted = null;
             _onSearchComplete = null;
         }

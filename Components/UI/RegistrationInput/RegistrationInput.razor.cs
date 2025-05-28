@@ -19,14 +19,14 @@ namespace VehicleInformationChecker.Components.UI.RegistrationInput
         {
             if (!_registrationInput.Input.Equals(Vehicle.RegistrationNumber, StringComparison.InvariantCultureIgnoreCase))
             {
-                await SearchRegistrationEventService.NotifySearchRegistrationAsync(_registrationInput.Input);
+                await SearchRegistrationEventService.NotifySearchVehicleAsync(_registrationInput.Input);
                 StateHasChanged();
             }
         }
 
-        private Task OnSearchCompleted(VehicleModel vehicle)
+        private Task OnSearchCompleted(VehicleModel vehicle, SearchType searchType)
         {
-            _searchFailed = vehicle.RegistrationNumber == string.Empty;
+            _searchFailed = String.IsNullOrEmpty(vehicle.RegistrationNumber);
             return InvokeAsync(StateHasChanged);
         }
 

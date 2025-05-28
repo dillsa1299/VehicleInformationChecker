@@ -1,18 +1,18 @@
 ﻿@using VehicleInformationChecker.Components.UI.MotStatus
 @using VehicleInformationChecker.Components.UI.TaxStatus
-@if (_isSearching)
+@if (_isSearchingDetails)
 {
     <div class="d-flex justify-center pt-4">
         <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
     </div>
 }
 
-@if (!String.IsNullOrEmpty(Vehicle!.RegistrationNumber) && !_isSearching)
+@if (!String.IsNullOrEmpty(Vehicle!.RegistrationNumber) && !_isSearchingDetails)
 {
-    @if (_isAdditionalSearching)
+    @if (_isSearchingDetails || _isSearchingImages)
     {
         <div class="d-flex justify-center">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="400px" Height="300px"/>
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="600px" Height="300px"/>
         </div>
     }
     else
@@ -72,7 +72,7 @@
                 <MudText Typo="Typo.h3" Align="Align.Center">@Vehicle.YearOfManufacture @Vehicle.Make @Vehicle.Model</MudText>
 
                 <MudText Typo="Typo.h4">AI Summary</MudText>
-                @if (_isAdditionalSearching)
+                @if (_isSearchingDetails || _isSearchingAiSummary)
                 {
                     <MudSkeleton />
                     <MudSkeleton />

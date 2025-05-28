@@ -5,27 +5,27 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
     public interface ISearchRegistrationEventService
     {
         /// <summary>
-        /// Search with registration event delegate
+        /// Search vehicle details event delegate
         /// </summary>
         /// <returns><see cref="Task"/></returns>
-        public delegate Task SearchRegistrationEvent(string registration);
+        public delegate Task SearchVehicleEvent(string registration);
 
         /// <summary>
         /// Search completed event delegate
         /// </summary>
         /// <returns><see cref="Task"/></returns>
-        public delegate Task SearchCompletedEvent(VehicleModel vehicle);
+        public delegate Task SearchCompletedEvent(VehicleModel vehicle, SearchType searchType);
 
         /// <summary>
         /// Search completed event delegate
         /// </summary>
         /// <returns><see cref="Task"/></returns>
-        public delegate Task SearchStartedEvent(bool isAdditionalSearch);
+        public delegate Task SearchStartedEvent(SearchType searchType);
 
         /// <summary>
-        /// Event for searching a registration
+        /// Event for searching for vehicle details
         /// </summary>
-        event SearchRegistrationEvent OnSearchRegistration;
+        event SearchVehicleEvent OnSearchVehicle;
 
         /// <summary>
         /// Event for when a search is started
@@ -38,21 +38,21 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
         event SearchCompletedEvent OnSearchCompleted;
 
         /// <summary>
-        /// Triggers any event listeners to begin a registration search
+        /// Triggers any event listeners to begin a search
         /// </summary>
         /// <param name="registration"><see cref="string"/></param>
         /// <returns><see cref="Task"/></returns>
-        Task NotifySearchRegistrationAsync(string registration);
+        Task NotifySearchVehicleAsync(string registration);
 
         /// <summary>
         /// Triggers any event listeners when a search has started
         /// </summary>
-        Task NotifySearchStarted(bool isAdditionalSearch);
+        Task NotifySearchStarted(SearchType searchType);
 
         /// <summary>
         /// Triggers any event listeners when a search has completed
         /// </summary>
         /// <param name="vehicle"><see cref="VehicleModel"/></param>
-        Task NotifySearchCompleted(VehicleModel vehicle);
+        Task NotifySearchCompleted(VehicleModel vehicle, SearchType searchType);
     }
 }

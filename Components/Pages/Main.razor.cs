@@ -16,29 +16,39 @@ namespace VehicleInformationChecker.Components.Pages
 
         private async Task SearchRegistration(string registration)
         {
-            _vehicle = await SearchRegistrationService.SearchVehicleDetailsAsync(registration);
-            await SearchRegistrationEventService.NotifySearchCompleted(_vehicle);
+            // Details Search
+            await SearchRegistrationEventService.NotifySearchStarted(SearchType.Details);
+            _vehicle = await SearchRegistrationService.SearchVehicleAsync(new VehicleModel { RegistrationNumber = registration }, SearchType.Details);
+            await SearchRegistrationEventService.NotifySearchCompleted(_vehicle, SearchType.Details);
             StateHasChanged();
-            await AdditionalSearch(_vehicle);
-        }
 
-        private async Task AdditionalSearch(VehicleModel vehicle)
-        {
-            await SearchRegistrationEventService.NotifySearchStarted(true);
-            _vehicle = await SearchRegistrationService.SearchVehicleAdditionalDetailsAsync(vehicle);
-            await SearchRegistrationEventService.NotifySearchCompleted(_vehicle);
+            // Don't waste further API calls on failed search
+            if (String.IsNullOrEmpty(_vehicle.RegistrationNumber)) return;
+
+            // TODO - Do Image and AI at same time.
+
+            // Image Search
+            await SearchRegistrationEventService.NotifySearchStarted(SearchType.Images);
+            _vehicle = await SearchRegistrationService.SearchVehicleAsync(_vehicle, SearchType.Images);
+            await SearchRegistrationEventService.NotifySearchCompleted(_vehicle, SearchType.Images);
+            StateHasChanged();
+
+            // AI Summary search
+            await SearchRegistrationEventService.NotifySearchStarted(SearchType.AiSummary);
+            _vehicle = await SearchRegistrationService.SearchVehicleAsync(_vehicle, SearchType.AiSummary);
+            await SearchRegistrationEventService.NotifySearchCompleted(_vehicle, SearchType.AiSummary);
             StateHasChanged();
         }
 
         protected override Task OnInitializedAsync()
         {
-            SearchRegistrationEventService.OnSearchRegistration += SearchRegistration;
+            SearchRegistrationEventService.OnSearchVehicle += SearchRegistration;
             return base.OnInitializedAsync();
         }
 
         public void Dispose()
         {
-            SearchRegistrationEventService.OnSearchRegistration -= SearchRegistration;
+            SearchRegistrationEventService.OnSearchVehicle -= SearchRegistration;
             GC.SuppressFinalize(this);
         }
     }

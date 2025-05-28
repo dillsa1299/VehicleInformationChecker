@@ -69,31 +69,48 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                          ?? throw new InvalidOperationException("Gemini API key not found in configuration.");
         }
 
-        public async Task<VehicleModel> SearchVehicleDetailsAsync(string registration)
+        public async Task<VehicleModel> SearchVehicleAsync(VehicleModel vehicle, SearchType searchType)
         {
-            if (string.IsNullOrEmpty(registration) || !Regex.IsMatch(registration, @"^[a-zA-Z0-9]{0,7}$"))
+            if (string.IsNullOrEmpty(vehicle.RegistrationNumber) || !Regex.IsMatch(vehicle.RegistrationNumber, @"^[a-zA-Z0-9]{0,7}$"))
                 return new VehicleModel();
 
-            // Setup search tasks
-            var vesTask = SearchVesAsync(registration);
-            var motTask = SearchMotAsync(registration);
+            VesSearchResponse? vesSearchResponse = null;
+            MotSearchResponse? motSearchResponse = null;
+            ImageSearchResponse? imageSearchResponse = null;
+            string? aiSummary = null;
 
-            // Wait for all to complete
-            await Task.WhenAll(vesTask.AsTask(), motTask.AsTask());
+            switch (searchType)
+            {
+                case SearchType.Details:
+                    // Setup search tasks
+                    var vesTask = SearchVesAsync(vehicle.RegistrationNumber);
+                    var motTask = SearchMotAsync(vehicle.RegistrationNumber);
 
-            // Get results
-            var vesSearchResponse = await vesTask;
-            var motSearchResponse = await motTask;
+                    // Wait for all to complete
+                    await Task.WhenAll(vesTask.AsTask(), motTask.AsTask());
 
-            if (string.IsNullOrEmpty(vesSearchResponse.RegistrationNumber) || string.IsNullOrEmpty(vesSearchResponse.RegistrationNumber))
-                // Failed to get data from one of the APIs
-                return new VehicleModel();
+                    // Get results
+                    vesSearchResponse = await vesTask;
+                    motSearchResponse = await motTask;
 
-            VehicleModel vehicleModel = new();
+                    if (string.IsNullOrEmpty(vesSearchResponse.RegistrationNumber) || string.IsNullOrEmpty(vesSearchResponse.RegistrationNumber))
+                        // Failed to get data from one of the APIs
+                        return new VehicleModel();
+                    break;
+                case SearchType.Images:
+                    var query = $"{vehicle.Colour} {vehicle.YearOfManufacture} {vehicle.Make} {vehicle.Model}";
+                    imageSearchResponse = await SearchImagesAsync(query);
+                    break;
+                case SearchType.AiSummary:
+                    var prompt = $"Give a summary of the following UK registered vehicle, including performance metrics and providing additional details when possible. " +
+                         $"This information is already displayed so should not be repeated: Year: {vehicle.YearOfManufacture}, " +
+                         $"Make: {vehicle.Make}, Model: {vehicle.Model}, Fuel Type: {vehicle.FuelType}, " +
+                         $"Engine Capacity: {vehicle.EngineCapacity}";
+                    aiSummary = await SearchGeminiAsync(prompt);
+                    break;
+            }
 
-            MapResponses(vehicleModel, vesSearchResponse, motSearchResponse, null, null);
-
-            return vehicleModel;
+            return MapResponses(vehicle, vesSearchResponse, motSearchResponse, imageSearchResponse, aiSummary);
         }
 
         private async ValueTask<VesSearchResponse> SearchVesAsync(string registration)
@@ -185,20 +202,6 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             return true;
         }
 
-        public async Task<VehicleModel> SearchVehicleAdditionalDetailsAsync(VehicleModel vehicleModel)
-        {
-            var query = $"{vehicleModel.Colour} {vehicleModel.YearOfManufacture} {vehicleModel.Make} {vehicleModel.Model}";
-            var imageSearchResponse = await SearchImagesAsync(query);
-
-            var prompt = $"Give a summary of the following UK registered vehicle, including performance metrics and providing additional details when possible. " +
-                         $"This information is already displayed so should not be repeated: Year: {vehicleModel.YearOfManufacture}, " +
-                         $"Make: {vehicleModel.Make}, Model: {vehicleModel.Model}, Fuel Type: {vehicleModel.FuelType}, " +
-                         $"Engine Capacity: {vehicleModel.EngineCapacity}";
-            var aiSummary = await SearchGeminiAsync(prompt);
-
-            return MapResponses(vehicleModel, null,  null, imageSearchResponse, aiSummary);
-        }
-
         private async Task<ImageSearchResponse?> SearchImagesAsync(string query)
         {
             var url = $"https://www.googleapis.com/customsearch/v1?q={Uri.EscapeDataString(query)}&cx={_googleCx}&key={_googleKey}&searchType=image";
@@ -259,13 +262,12 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
         }
 
         private static VehicleModel MapResponses(
-            VehicleModel? vehicleModel,
+            VehicleModel vehicleModel,
             VesSearchResponse? vesSearchResponse,
             MotSearchResponse? motSearchResponse,
             ImageSearchResponse? imageSearchResponse,
             string? aiSummary)
         {
-            vehicleModel ??= new VehicleModel();
 
             if (vesSearchResponse != null)
             {
@@ -277,7 +279,6 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                 vehicleModel.FuelType = FormatName(vesSearchResponse.FuelType);
                 vehicleModel.TaxStatus = vesSearchResponse.TaxStatus ?? string.Empty;
                 vehicleModel.MotStatus = vesSearchResponse.MotStatus ?? string.Empty;
-
                 vehicleModel.MotExpiryDate = DateOnlyTryParse(vesSearchResponse.MotExpiryDate, "yyyy-MM-dd");
                 vehicleModel.DateOfLastV5CIssued = DateOnlyTryParse(vesSearchResponse.DateOfLastV5CIssued, "yyyy-MM-dd") ?? default;
                 vehicleModel.MonthOfFirstRegistration = DateOnlyTryParse(vesSearchResponse.MonthOfFirstRegistration, "yyyy-MM") ?? default;
@@ -287,11 +288,18 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             if (motSearchResponse != null)
             {
                 vehicleModel.Model = FormatName(motSearchResponse.Model);
-                vehicleModel.MotTests = motSearchResponse.MotTests ?? Enumerable.Empty<MotTest>();
+                vehicleModel.MotTests = motSearchResponse.MotTests ?? [];
             }
 
-            vehicleModel.Images = imageSearchResponse?.Items ?? Enumerable.Empty<ImageSearchItem>();
-            vehicleModel.AiSummary = aiSummary ?? string.Empty;
+            if (imageSearchResponse != null)
+            {
+                vehicleModel.Images = imageSearchResponse?.Items ?? [];
+            }
+
+            if (aiSummary != null)
+            {
+                vehicleModel.AiSummary = aiSummary ?? string.Empty;
+            }
 
             return vehicleModel;
 
