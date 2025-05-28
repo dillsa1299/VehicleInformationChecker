@@ -102,10 +102,9 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                     imageSearchResponse = await SearchImagesAsync(query);
                     break;
                 case SearchType.AiSummary:
-                    var prompt = $"Give a summary of the following UK registered vehicle, including performance metrics and providing additional details when possible. " +
-                         $"This information is already displayed so should not be repeated: Year: {vehicle.YearOfManufacture}, " +
-                         $"Make: {vehicle.Make}, Model: {vehicle.Model}, Fuel Type: {vehicle.FuelType}, " +
-                         $"Engine Capacity: {vehicle.EngineCapacity}";
+                    var prompt = $"Provide a summary of the following UK specification vehicle, including performance metrics and providing additional details," +
+                        $"but not using any markup. This information is already displayed so should not be repeated: Year: {vehicle.YearOfManufacture}, " +
+                         $"Make: {vehicle.Make}, Model: {vehicle.Model}, Fuel Type: {vehicle.FuelType}, Engine Capacity: {vehicle.EngineCapacity}";
                     aiSummary = await SearchGeminiAsync(prompt);
                     break;
             }
