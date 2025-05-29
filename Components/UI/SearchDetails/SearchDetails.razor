@@ -76,7 +76,14 @@
             </MudItem>
 
             <MudItem xs="12">
-                <MotHistory Vehicle="@Vehicle"></MotHistory>
+                <MudExpansionPanels MultiExpansion="true">
+                        <MudExpansionPanel Text="Common Issues">
+                            Lorem ipsum dolor sit amet consectetur adipiscing elit.
+                        </MudExpansionPanel>
+                        <MudExpansionPanel Text="MOT History">
+                            <MotHistory Vehicle="@Vehicle"></MotHistory>
+                        </MudExpansionPanel>
+                </MudExpansionPanels>
             </MudItem>
         </MudGrid>
     }

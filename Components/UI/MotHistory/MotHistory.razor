@@ -1,32 +1,34 @@
-﻿@if (Vehicle != null)
+﻿@if (Vehicle != null && Vehicle.MotTests.Any())
 {
-    @foreach (var test in Vehicle?.MotTests)
-    {
-        <MudExpansionPanel HideIcon="true">
-            <TitleContent>
-                <div class="d-flex">
-                    <MudIcon Icon="@(test.Passed ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)" 
-                             Color="@(test.Passed ? Color.Success : Color.Error)" 
-                             Class="mr-2" />
-                    <MudText Class="mt-1">@((test.Passed ? "Pass" : "Fail")) | @($"{test.OdometerValue:N0}") @test.OdometerUnit | @test.CompletedDate</MudText>
-                    @* <MudBadge Content="3" Color="Color.Primary" Overlap="true" Class="d-flex ml-auto"> *@
-                    @*     <MudIcon Icon="@Icons.Material.Filled.Email" Color="@((test.Passed ? Color.Success : Color.Error))" /> *@
-                    @* </MudBadge> *@
-                </div>
-            </TitleContent>
-            <ChildContent>
-                @if (test.Defects.Any())
-                {
-                    @foreach (var defect in test.Defects)
+    <MudExpansionPanels MultiExpansion="true">
+        @foreach (var test in Vehicle!.MotTests)
+        {
+            <MudExpansionPanel HideIcon="true">
+                <TitleContent>
+                    <div class="d-flex">
+                        <MudIcon Icon="@(test.Passed ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                 Color="@(test.Passed ? Color.Success : Color.Error)"
+                                 Class="mr-2" />
+                        <MudText Class="mt-1">@((test.Passed ? "Pass" : "Fail")) | @($"{test.OdometerValue:N0}") @test.OdometerUnit | @test.CompletedDate</MudText>
+                        @* <MudBadge Content="3" Color="Color.Primary" Overlap="true" Class="d-flex ml-auto"> *@
+                        @*     <MudIcon Icon="@Icons.Material.Filled.Email" Color="@((test.Passed ? Color.Success : Color.Error))" /> *@
+                        @* </MudBadge> *@
+                    </div>
+                </TitleContent>
+                <ChildContent>
+                    @if (test.Defects.Any())
                     {
-                        <MudText Class="ml-4">@defect.Description</MudText>
+                        @foreach (var defect in test.Defects)
+                        {
+                            <MudText Class="ml-4">@defect.Description</MudText>
+                        }
                     }
-                }
-                else
-                {
-                    <MudText Class="ml-4">No defects found.</MudText>
-                }
-            </ChildContent>
-        </MudExpansionPanel>
-    }
+                    else
+                    {
+                        <MudText Class="ml-4">No defects found.</MudText>
+                    }
+                </ChildContent>
+            </MudExpansionPanel>
+        }
+    </MudExpansionPanels>
 }
