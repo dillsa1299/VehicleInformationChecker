@@ -12,7 +12,7 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
         [Parameter]
         public VehicleModel? Vehicle { get; set; }
 
-        private readonly string _carPlaceholder = "images/placeholder-car.svg";
+        private readonly string _placeholderImage = "images/placeholder-car.svg";
         private bool _isSearchingDetails;
         private bool _isSearchingImages;
         private bool _isSearchingAiSummary;

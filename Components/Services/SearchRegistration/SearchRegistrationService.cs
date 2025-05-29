@@ -97,10 +97,12 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                         // Failed to get data from one of the APIs
                         return new VehicleModel();
                     break;
+
                 case SearchType.Images:
                     var query = $"{vehicle.Colour} {vehicle.YearOfManufacture} {vehicle.Make} {vehicle.Model}";
                     imageSearchResponse = await SearchImagesAsync(query);
                     break;
+
                 case SearchType.AiSummary:
                     var prompt = $"Provide a summary of the following UK specification vehicle, including performance metrics and providing additional details," +
                         $"but not using any markup. This information is already displayed so should not be repeated: Year: {vehicle.YearOfManufacture}, " +
@@ -242,7 +244,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             HttpResponseMessage response = await _httpClient.PostAsync(_geminiUrl + _geminiKey, requestContent);
 
             if (!response.IsSuccessStatusCode)
-                return String.Empty;
+                return "Unable to generate AI summary. Please try again.";
 
             string responseString = await response.Content.ReadAsStringAsync();
 
