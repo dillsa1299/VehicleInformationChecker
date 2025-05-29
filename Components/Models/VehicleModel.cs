@@ -18,7 +18,7 @@ namespace VehicleInformationChecker.Components.Models
         public DateOnly? TaxDueDate { get; set; }
         public string MotStatus { get; set; } = String.Empty;
         public DateOnly? MotExpiryDate { get; set; }
-        public IEnumerable<MotTest> MotTests { get; set; } = [];
+        public IEnumerable<MotModel> MotTests { get; set; } = [];
 
         public DateOnly DateOfLastV5CIssued { get; set; }
         public DateOnly MonthOfFirstRegistration { get; set; }

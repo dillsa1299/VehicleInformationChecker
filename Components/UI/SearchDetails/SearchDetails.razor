@@ -1,5 +1,6 @@
 ﻿@using VehicleInformationChecker.Components.UI.ImageViewer
 @using VehicleInformationChecker.Components.UI.MotStatus
+@using VehicleInformationChecker.Components.UI.MotHistory
 @using VehicleInformationChecker.Components.UI.TaxStatus
 
 @if (Vehicle != null && !String.IsNullOrEmpty(Vehicle.RegistrationNumber))
@@ -72,6 +73,10 @@
                     <MotStatus Vehicle="@Vehicle"></MotStatus>
                     <TaxStatus Vehicle="@Vehicle"></TaxStatus>
                 </MudStack>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MotHistory Vehicle="@Vehicle"></MotHistory>
             </MudItem>
         </MudGrid>
     }

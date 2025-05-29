@@ -6,6 +6,7 @@ using VehicleInformationChecker.Components.Models;
 using VehicleInformationChecker.Components.Models.SearchResponses;
 using VehicleInformationChecker.Components.Models.SearchResponses.ImageSearch;
 using VehicleInformationChecker.Components.Models.SearchResponses.MotSearch;
+using static VehicleInformationChecker.Components.Models.MotDefectModel;
 
 namespace VehicleInformationChecker.Components.Services.SearchRegistration
 {
@@ -289,7 +290,24 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             if (motSearchResponse != null)
             {
                 vehicleModel.Model = FormatName(motSearchResponse.Model);
-                vehicleModel.MotTests = motSearchResponse.MotTests ?? [];
+
+                if (motSearchResponse.MotTests != null)
+                {
+                    vehicleModel.MotTests = [.. motSearchResponse.MotTests.Select(test => new MotModel
+                    {
+                        CompletedDate = DateOnlyTryParseIso(test.CompletedDate) ?? default,
+                        Passed = test.TestResult == "PASSED",
+                        ExpiryDate = DateOnlyTryParse(test.ExpiryDate, "yyyy-MM-dd") ?? default,
+                        OdometerValue = long.Parse(test.OdometerValue),
+                        OdometerUnit = test.OdometerUnit == "MI" ? "Miles" : "Kilometers",
+                        Defects = test.Defects?.Select(defect => new MotDefectModel
+                        {
+                            Type = GetDefectType(defect.Type),
+                            Description = defect.Text,
+                            Dangerous = defect.Dangerous
+                        }).ToList() ?? []
+                    })];
+                }
             }
 
             if (imageSearchResponse != null)
@@ -307,7 +325,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             // Helper for title-casing with length check
             static string FormatName(string? value) =>
                 !string.IsNullOrWhiteSpace(value)
-                    ? (value.Length > 3 ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(value.ToLower()) : value)
+                    ? (value.Length > 3 ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(value.ToLowerInvariant()) : value)
                     : string.Empty;
 
             // Local helper for safe date parsing
@@ -315,6 +333,25 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                 => !string.IsNullOrWhiteSpace(value) && DateOnly.TryParseExact(value, format, out var date)
                     ? date
                     : null;
+
+            // Local helper to convert MOT defect type string to enum
+            static MotDefectType GetDefectType(string? type)
+            {
+                return type switch
+                {
+                    "ADVISORY" => MotDefectType.Advisory,
+                    "DANGEROUS" => MotDefectType.Dangerous,
+                    "FAIL" => MotDefectType.Fail,
+                    "MAJOR" => MotDefectType.Major,
+                    "MINOR" => MotDefectType.Minor,
+                    "NON SPECIFIC" => MotDefectType.NonSpecific,
+                    "SYSTEM GENERATED" => MotDefectType.SystemGenerated,
+                    "USER ENTERED" => MotDefectType.UserEntered,
+                    _ => MotDefectType.UserEntered
+                };
+            }
         }
+        static DateOnly? DateOnlyTryParseIso(string? value)
+            => DateTimeOffset.TryParse(value, out var dt) ? DateOnly.FromDateTime(dt.DateTime) : null;
     }
 }
