@@ -4,30 +4,30 @@
 {
     <MudExpansionPanel HideIcon="true">
         <TitleContent>
-            <div class="d-flex">
+            <div class="d-flex align-center">
                 <MudIcon Icon="@(Mot.Passed? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
-                         Color="@(Mot.Passed? Color.Success: Color.Error)" Size="Size.Large" Class="mr-2" />
+                         Color="@(Mot.Passed? Color.Success: Color.Error)" Size="@_iconSize" Class="mr-2" />
                 <MudText Class="mt-2">@Mot.CompletedDate.ToString("d MMMM yyyy") | @($"{Mot.OdometerValue:N0}") @Mot.OdometerUnit</MudText>
 
                 <div class="d-flex align-items-center ml-auto">
                     @if (_dangerousDefects.Any())
                     {
                         <MudBadge Content="@_dangerousDefects.Count()" Overlap="true" Class="ml-2" Color="Color.Tertiary" Bordered="true">
-                            <MudIcon Icon="@Icons.Material.Outlined.Dangerous" Color="Color.Error" Size="Size.Large" />
+                            <MudIcon Icon="@Icons.Material.Outlined.Dangerous" Color="Color.Error" Size="@_iconSize" />
                         </MudBadge>
                     }
 
                     @if (_majorDefects.Any())
                     {
                         <MudBadge Content="@_majorDefects.Count()" Overlap="true" Class="ml-2" Color="Color.Tertiary" Bordered="true">
-                            <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Color="Color.Warning" Size="Size.Large" />
+                            <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Color="Color.Warning" Size="@_iconSize" />
                         </MudBadge>
                     }
 
                     @if (_otherDefects.Any())
                     {
                         <MudBadge Content="@_otherDefects.Count()" Overlap="true" Class="ml-2" Color="Color.Tertiary" Bordered="true">
-                            <MudIcon Icon="@Icons.Material.Outlined.Info" Color="Color.Primary" Size="Size.Large" />
+                            <MudIcon Icon="@Icons.Material.Outlined.Info" Color="Color.Primary" Size="@_iconSize" />
                         </MudBadge>
                     }
                 </div>
