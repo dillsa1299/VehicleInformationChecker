@@ -50,15 +50,23 @@ namespace VehicleInformationChecker.Components.Pages
             StateHasChanged();
         }
 
+        private Task OnSearchCompleted(VehicleModel vehicle, SearchType searchType)
+        {
+            _vehicle = vehicle;
+            return InvokeAsync(StateHasChanged);
+        }
+
         protected override Task OnInitializedAsync()
         {
             SearchRegistrationEventService.OnSearchVehicle += SearchRegistration;
+            SearchRegistrationEventService.OnSearchCompleted += OnSearchCompleted;
             return base.OnInitializedAsync();
         }
 
         public void Dispose()
         {
             SearchRegistrationEventService.OnSearchVehicle -= SearchRegistration;
+            SearchRegistrationEventService.OnSearchCompleted -= OnSearchCompleted;
             GC.SuppressFinalize(this);
         }
     }

@@ -1,5 +1,4 @@
 ﻿using VehicleInformationChecker.Components.Models.SearchResponses.ImageSearch;
-using VehicleInformationChecker.Components.Models.SearchResponses.MotSearch;
 
 namespace VehicleInformationChecker.Components.Models
 {
@@ -25,5 +24,7 @@ namespace VehicleInformationChecker.Components.Models
 
         public IEnumerable<ImageSearchItem> Images { get; set; } = [];
         public string AiSummary { get; set; } = String.Empty;
+        public string AiCommonIssues { get; set; } = String.Empty;
+        public string AiMotHistorySummary { get; set; } = String.Empty;
     }
 }

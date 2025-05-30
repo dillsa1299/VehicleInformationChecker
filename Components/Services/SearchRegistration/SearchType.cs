@@ -13,6 +13,14 @@
         /// <summary>
         /// Search for vehicle AI summary
         /// </summary>
-        AiSummary
+        AiSummary,
+        /// <summary>
+        /// Search for AI common issues
+        /// </summary>
+        AiCommonIssues,
+        /// <summary>
+        /// Search for AI MOT history summary
+        /// </summary>
+        AiMotHistorySummary
     }
 }

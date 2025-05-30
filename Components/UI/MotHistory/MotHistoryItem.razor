@@ -1,33 +1,36 @@
 ﻿@using VehicleInformationChecker.Components.Models
 @using static VehicleInformationChecker.Components.Models.MotDefectModel
+
 @if (Mot != null)
 {
-    <MudExpansionPanel HideIcon="true">
+    <MudExpansionPanel HideIcon="true" Disabled="@(!Mot.Defects.Any())">
         <TitleContent>
             <div class="d-flex align-center">
                 <MudIcon Icon="@(Mot.Passed? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
                          Color="@(Mot.Passed? Color.Success: Color.Error)" Size="@_iconSize" Class="mr-2" />
-                <MudText Class="mt-2">@Mot.CompletedDate.ToString("d MMMM yyyy") | @($"{Mot.OdometerValue:N0}") @Mot.OdometerUnit</MudText>
+                <MudText Class="mt-2">
+                    @Mot.CompletedDate.ToString("d MMMM yyyy") | @(Mot.OdometerValue == -1 ? "N/A" : $"{Mot.OdometerValue:N0} {Mot.OdometerUnit}")
+                </MudText>
 
                 <div class="d-flex align-items-center ml-auto">
                     @if (_dangerousDefects.Any())
                     {
                         <MudBadge Content="@_dangerousDefects.Count()" Overlap="true" Class="ml-2" Color="Color.Tertiary" Bordered="true">
-                            <MudIcon Icon="@Icons.Material.Outlined.Dangerous" Color="Color.Error" Size="@_iconSize" />
+                            <MudIcon Icon="@Icons.Material.Outlined.Dangerous" Color="Color.Error" Size="@_iconSize" Title="Dangerous Defects" />
                         </MudBadge>
                     }
 
                     @if (_majorDefects.Any())
                     {
                         <MudBadge Content="@_majorDefects.Count()" Overlap="true" Class="ml-2" Color="Color.Tertiary" Bordered="true">
-                            <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Color="Color.Warning" Size="@_iconSize" />
+                            <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Color="Color.Warning" Size="@_iconSize" Title="Major Defects" />
                         </MudBadge>
                     }
 
                     @if (_otherDefects.Any())
                     {
                         <MudBadge Content="@_otherDefects.Count()" Overlap="true" Class="ml-2" Color="Color.Tertiary" Bordered="true">
-                            <MudIcon Icon="@Icons.Material.Outlined.Info" Color="Color.Primary" Size="@_iconSize" />
+                            <MudIcon Icon="@Icons.Material.Outlined.Info" Color="Color.Primary" Size="@_iconSize" Title="Advisories" />
                         </MudBadge>
                     }
                 </div>
@@ -84,11 +87,6 @@
                         </li>
                     }
                 </ul>
-            }
-            
-            @if (!Mot.Defects.Any())
-            {
-                <MudText Class="ml-4">No defects found.</MudText>
             }
         </ChildContent>
         </MudExpansionPanel>

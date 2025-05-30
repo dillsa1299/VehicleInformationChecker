@@ -17,10 +17,13 @@ namespace VehicleInformationChecker.Components.UI.RegistrationInput
 
         private async Task SearchRegistrationInput()
         {
+            // Remove any whitespace
+            _registrationInput.Input = _registrationInput.Input.Replace(" ", "");
+
+            // Check if searching for same registration as already loaded
             if (!_registrationInput.Input.Equals(Vehicle.RegistrationNumber, StringComparison.InvariantCultureIgnoreCase))
             {
                 await SearchRegistrationEventService.NotifySearchVehicleAsync(_registrationInput.Input);
-                StateHasChanged();
             }
         }
 

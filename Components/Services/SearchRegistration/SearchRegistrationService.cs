@@ -79,6 +79,9 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             MotSearchResponse? motSearchResponse = null;
             ImageSearchResponse? imageSearchResponse = null;
             string? aiSummary = null;
+            string? aiCommonIssues = null;
+
+            string aiCarDetails = $"Year={vehicle.YearOfManufacture}, Make={vehicle.Make}, Model={vehicle.Model}, Fuel Type={vehicle.FuelType}, Engine Capacity={vehicle.EngineCapacity}";
 
             switch (searchType)
             {
@@ -106,13 +109,18 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
 
                 case SearchType.AiSummary:
                     var prompt = $"Provide a summary of the following UK specification vehicle, including performance metrics and providing additional details," +
-                        $"but not using any markup. This information is already displayed so should not be repeated: Year: {vehicle.YearOfManufacture}, " +
-                         $"Make: {vehicle.Make}, Model: {vehicle.Model}, Fuel Type: {vehicle.FuelType}, Engine Capacity: {vehicle.EngineCapacity}";
+                        $"but not using any markup. This information is already displayed so should not be repeated: " + aiCarDetails;
                     aiSummary = await SearchGeminiAsync(prompt);
+                    break;
+
+                case SearchType.AiCommonIssues:
+                    // AI Common Issues search
+                    var commonIssuesPrompt = $"List the common issues with the UK specification of the following vehicle with no introduction: " + aiCarDetails;
+                    aiCommonIssues = await SearchGeminiAsync(commonIssuesPrompt);
                     break;
             }
 
-            return MapResponses(vehicle, vesSearchResponse, motSearchResponse, imageSearchResponse, aiSummary);
+            return MapResponses(vehicle, vesSearchResponse, motSearchResponse, imageSearchResponse, aiSummary, aiCommonIssues);
         }
 
         private async ValueTask<VesSearchResponse> SearchVesAsync(string registration)
@@ -268,17 +276,18 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             VesSearchResponse? vesSearchResponse,
             MotSearchResponse? motSearchResponse,
             ImageSearchResponse? imageSearchResponse,
-            string? aiSummary)
+            string? aiSummary,
+            string? aiCommonIssues)
         {
 
             if (vesSearchResponse != null)
             {
                 vehicleModel.RegistrationNumber = vesSearchResponse.RegistrationNumber ?? string.Empty;
                 vehicleModel.YearOfManufacture = vesSearchResponse.YearOfManufacture;
-                vehicleModel.Make = FormatName(vesSearchResponse.Make);
-                vehicleModel.Colour = FormatName(vesSearchResponse.Colour);
+                vehicleModel.Make = FormatName(vesSearchResponse.Make, 3);
+                vehicleModel.Colour = FormatName(vesSearchResponse.Colour, 0);
                 vehicleModel.EngineCapacity = $"{vesSearchResponse.EngineCapacity} cc";
-                vehicleModel.FuelType = FormatName(vesSearchResponse.FuelType);
+                vehicleModel.FuelType = FormatName(vesSearchResponse.FuelType, 0);
                 vehicleModel.TaxStatus = vesSearchResponse.TaxStatus ?? string.Empty;
                 vehicleModel.MotStatus = vesSearchResponse.MotStatus ?? string.Empty;
                 vehicleModel.MotExpiryDate = DateOnlyTryParse(vesSearchResponse.MotExpiryDate, "yyyy-MM-dd");
@@ -289,7 +298,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
 
             if (motSearchResponse != null)
             {
-                vehicleModel.Model = FormatName(motSearchResponse.Model);
+                vehicleModel.Model = FormatName(motSearchResponse.Model, 3);
 
                 if (motSearchResponse.MotTests != null)
                 {
@@ -298,8 +307,8 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                         CompletedDate = DateOnlyTryParseIso(test.CompletedDate) ?? default,
                         Passed = test.TestResult == "PASSED",
                         ExpiryDate = DateOnlyTryParse(test.ExpiryDate, "yyyy-MM-dd") ?? default,
-                        OdometerValue = long.Parse(test.OdometerValue),
-                        OdometerUnit = test.OdometerUnit == "MI" ? "Miles" : "Kilometers",
+                        OdometerValue = long.TryParse(test.OdometerValue, out var odo) ? odo : -1,
+                        OdometerUnit = test.OdometerUnit == "KM" ? "Kilometers" : "Miles",
                         Defects = test.Defects?.Select(defect => new MotDefectModel
                         {
                             Type = GetDefectType(defect.Type),
@@ -317,15 +326,20 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
 
             if (aiSummary != null)
             {
-                vehicleModel.AiSummary = aiSummary ?? string.Empty;
+                vehicleModel.AiSummary = aiSummary;
+            }
+
+            if (aiCommonIssues != null)
+            {
+                vehicleModel.AiCommonIssues = aiCommonIssues;
             }
 
             return vehicleModel;
 
             // Helper for title-casing with length check
-            static string FormatName(string? value) =>
+            static string FormatName(string? value, int maxLength) =>
                 !string.IsNullOrWhiteSpace(value)
-                    ? (value.Length > 3 ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(value.ToLowerInvariant()) : value)
+                    ? (value.Length > maxLength ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(value.ToLowerInvariant()) : value)
                     : string.Empty;
 
             // Local helper for safe date parsing
