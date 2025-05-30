@@ -20,6 +20,9 @@
                     <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100%" Width="100%"></MudSkeleton>
                 </MudStack>
             </MudItem>
+            <MudItem xs="12">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100px" Width="100%"></MudSkeleton>
+            </MudItem>
         </MudGrid>
     }
     else
@@ -77,12 +80,28 @@
 
             <MudItem xs="12">
                 <MudExpansionPanels MultiExpansion="true">
-                        <MudExpansionPanel Text="Common Issues">
-                            Lorem ipsum dolor sit amet consectetur adipiscing elit.
+                    <MudExpansionPanel>
+                        <TitleContent>
+                            <MudText Typo="Typo.h4">Common Issues</MudText>
+                        </TitleContent>
+                        <ChildContent>
+                            Work in progress.
+                        </ChildContent>
+                    </MudExpansionPanel>
+
+                    @if (Vehicle!.MotTests.Any())
+                    {
+                        <MudExpansionPanel>
+                            <TitleContent>
+                                <MudText Typo="Typo.h4">MOT History</MudText>
+                            </TitleContent>
+                            <ChildContent>
+                                <MudText Typo="Typo.h5">AI Summary</MudText>
+                                Work in progress.
+                                <MotHistory Vehicle="@Vehicle"></MotHistory>
+                            </ChildContent>
                         </MudExpansionPanel>
-                        <MudExpansionPanel Text="MOT History">
-                            <MotHistory Vehicle="@Vehicle"></MotHistory>
-                        </MudExpansionPanel>
+                    }
                 </MudExpansionPanels>
             </MudItem>
         </MudGrid>
