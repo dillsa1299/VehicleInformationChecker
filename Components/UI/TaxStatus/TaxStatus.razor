@@ -5,6 +5,8 @@
 
     @if (Vehicle?.TaxDueDate != null)
     {
-        <MudText Align="Align.Center" Typo="Typo.h6">Expires: @Vehicle?.TaxDueDate</MudText>
+        <MudText Align="Align.Center" Typo="Typo.h6">
+            @(Vehicle.TaxDueDate.Value < DateOnly.FromDateTime(DateTime.Today) ? "Expired:" : "Expires:") @Vehicle.TaxDueDate
+        </MudText>
     }
 </MudPaper>
