@@ -11,9 +11,9 @@
         /// </summary>
         Images,
         /// <summary>
-        /// Search for vehicle AI summary
+        /// Search for vehicle AI overview
         /// </summary>
-        AiSummary,
+        AiOverview,
         /// <summary>
         /// Search for AI common issues
         /// </summary>

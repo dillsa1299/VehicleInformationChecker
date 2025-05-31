@@ -17,7 +17,7 @@ namespace VehicleInformationChecker.Components.Pages
         private async Task SearchRegistration(string registration)
         {
             // Details Search
-            _vehicle.RegistrationNumber = registration;
+            _vehicle = new VehicleModel { RegistrationNumber = registration };
             await SearchRegistrationEventService.NotifySearchStarted(SearchType.Details);
             _vehicle = await SearchRegistrationService.SearchVehicleAsync(_vehicle, SearchType.Details);
             await SearchRegistrationEventService.NotifySearchCompleted(_vehicle, SearchType.Details);
@@ -26,10 +26,10 @@ namespace VehicleInformationChecker.Components.Pages
             // Don't waste further API calls on failed search
             if (String.IsNullOrEmpty(_vehicle.RegistrationNumber)) return;
 
-            // Perform parallel searches for images and AI summary
+            // Perform parallel searches for images and AI overview
             var imagesTask = SearchImages();
-            var aiSummaryTask = SearchAiSummary();
-            await Task.WhenAll(imagesTask, aiSummaryTask);
+            var aiOverviewTask = SearchAiOverview();
+            await Task.WhenAll(imagesTask, aiOverviewTask);
         }
 
         private async Task SearchImages()
@@ -41,12 +41,12 @@ namespace VehicleInformationChecker.Components.Pages
             StateHasChanged();
         }
 
-        private async Task SearchAiSummary()
+        private async Task SearchAiOverview()
         {
-            // AI Summary search
-            await SearchRegistrationEventService.NotifySearchStarted(SearchType.AiSummary);
-            _vehicle = await SearchRegistrationService.SearchVehicleAsync(_vehicle, SearchType.AiSummary);
-            await SearchRegistrationEventService.NotifySearchCompleted(_vehicle, SearchType.AiSummary);
+            // AI Overview search
+            await SearchRegistrationEventService.NotifySearchStarted(SearchType.AiOverview);
+            _vehicle = await SearchRegistrationService.SearchVehicleAsync(_vehicle, SearchType.AiOverview);
+            await SearchRegistrationEventService.NotifySearchCompleted(_vehicle, SearchType.AiOverview);
             StateHasChanged();
         }
 

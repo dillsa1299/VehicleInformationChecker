@@ -23,7 +23,7 @@ namespace VehicleInformationChecker.Components.Models
         public DateOnly MonthOfFirstRegistration { get; set; }
 
         public IEnumerable<ImageSearchItem> Images { get; set; } = [];
-        public string AiSummary { get; set; } = String.Empty;
+        public string AiOverview { get; set; } = String.Empty;
         public string AiCommonIssues { get; set; } = String.Empty;
         public string AiMotHistorySummary { get; set; } = String.Empty;
     }

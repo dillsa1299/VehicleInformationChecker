@@ -59,8 +59,8 @@
                         </RowTemplate>
                     </MudTable>
 
-                    <MudText Class="mt-4" Typo="Typo.h4">AI Summary</MudText>
-                    @if (_isSearchingAiSummary)
+                    <MudText Class="mt-4" Typo="Typo.h4">AI Overview</MudText>
+                    @if (_isSearchingAiOverview)
                     {
                         <MudSkeleton />
                         <MudSkeleton />
@@ -71,7 +71,9 @@
                     }
                     else
                     {
-                        <MudText Typo="Typo.body2">@Vehicle?.AiSummary</MudText>
+                        <div class="ai-html">
+                            @AiOverviewHtml
+                        </div>
                     }
                 </MudPaper>
             </MudItem>
@@ -101,20 +103,38 @@
                             }
                             else
                             {
-                                <MudText Typo="Typo.body2">@Vehicle?.AiCommonIssues</MudText>
+                                <div class="ai-html">
+                                    @AiCommonIssuesHtml
+                                </div>
                             }
                         </ChildContent>
                     </MudExpansionPanel>
 
-                    @if (Vehicle!.MotTests.Any())
+                    @if (Vehicle != null && Vehicle.MotTests.Any())
                     {
-                        <MudExpansionPanel>
+                        <MudExpansionPanel ExpandedChanged="@OnMotHistoryExpandedAsync">
                             <TitleContent>
                                 <MudText Typo="Typo.h4">MOT History</MudText>
                             </TitleContent>
                             <ChildContent>
                                 <MudText Typo="Typo.h5">AI Summary</MudText>
-                                Work in progress.
+
+                                @if (_isSearchingAiMotHistorySummary)
+                                {
+                                    <MudSkeleton />
+                                    <MudSkeleton />
+                                    <MudSkeleton />
+                                    <MudSkeleton />
+                                    <MudSkeleton />
+                                    <MudSkeleton />
+                                }
+                                else
+                                {
+                                    <div class="ai-html">
+                                        @AiMotHistorySummaryHtml
+                                    </div>
+                                }
+
                                 <MotHistory Vehicle="@Vehicle"></MotHistory>
                             </ChildContent>
                         </MudExpansionPanel>

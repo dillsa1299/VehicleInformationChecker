@@ -78,10 +78,12 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             VesSearchResponse? vesSearchResponse = null;
             MotSearchResponse? motSearchResponse = null;
             ImageSearchResponse? imageSearchResponse = null;
-            string? aiSummary = null;
+            string? aiOverview = null;
             string? aiCommonIssues = null;
+            string? aiMotHistorySummary = null;
 
             string aiCarDetails = $"Year={vehicle.YearOfManufacture}, Make={vehicle.Make}, Model={vehicle.Model}, Fuel Type={vehicle.FuelType}, Engine Capacity={vehicle.EngineCapacity}";
+            string aiMotResults = JsonSerializer.Serialize(vehicle.MotTests) ?? String.Empty;
 
             switch (searchType)
             {
@@ -107,20 +109,26 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                     imageSearchResponse = await SearchImagesAsync(query);
                     break;
 
-                case SearchType.AiSummary:
-                    var prompt = $"Provide a summary of the following UK specification vehicle, including performance metrics and providing additional details," +
-                        $"but not using any markup. This information is already displayed so should not be repeated: " + aiCarDetails;
-                    aiSummary = await SearchGeminiAsync(prompt);
+                case SearchType.AiOverview:
+                    var prompt = $"Provide a brief overview of the following UK specification vehicle searching for additional information such as performance and pricing. " +
+                                 $"Don't discuss common issues. Give me the information directly without any introductory sentences or titles: " + aiCarDetails;
+                    aiOverview = await SearchGeminiAsync(prompt);
                     break;
 
                 case SearchType.AiCommonIssues:
                     // AI Common Issues search
-                    var commonIssuesPrompt = $"List the common issues with the UK specification of the following vehicle with no introduction: " + aiCarDetails;
+                    var commonIssuesPrompt = $"List the common issues with the UK specification of the following vehicle with no introduction/title: " + aiCarDetails;
                     aiCommonIssues = await SearchGeminiAsync(commonIssuesPrompt);
+                    break;
+
+                case SearchType.AiMotHistorySummary:
+                    // AI MOT History summary search
+                    var motHistorySummaryPrompt = $"Provide an overall summary for the following UK MOT test results. Exclude any introductory sentences: " + aiMotResults;
+                    aiMotHistorySummary = await SearchGeminiAsync(motHistorySummaryPrompt);
                     break;
             }
 
-            return MapResponses(vehicle, vesSearchResponse, motSearchResponse, imageSearchResponse, aiSummary, aiCommonIssues);
+            return MapResponses(vehicle, vesSearchResponse, motSearchResponse, imageSearchResponse, aiOverview, aiCommonIssues, aiMotHistorySummary);
         }
 
         private async ValueTask<VesSearchResponse> SearchVesAsync(string registration)
@@ -268,7 +276,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                 .GetProperty("text")
                 .GetString();
 
-            return text ?? String.Empty;
+            return text ?? "Unable to generate response. Please try again.";
         }
 
         private static VehicleModel MapResponses(
@@ -276,8 +284,9 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             VesSearchResponse? vesSearchResponse,
             MotSearchResponse? motSearchResponse,
             ImageSearchResponse? imageSearchResponse,
-            string? aiSummary,
-            string? aiCommonIssues)
+            string? aiOverview,
+            string? aiCommonIssues,
+            string? aiMotHistorySummary)
         {
 
             if (vesSearchResponse != null)
@@ -324,14 +333,19 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                 vehicleModel.Images = imageSearchResponse?.Items ?? [];
             }
 
-            if (aiSummary != null)
+            if (aiOverview != null)
             {
-                vehicleModel.AiSummary = aiSummary;
+                vehicleModel.AiOverview = aiOverview;
             }
 
             if (aiCommonIssues != null)
             {
                 vehicleModel.AiCommonIssues = aiCommonIssues;
+            }
+
+            if (aiMotHistorySummary != null)
+            {
+                vehicleModel.AiMotHistorySummary = aiMotHistorySummary;
             }
 
             return vehicleModel;

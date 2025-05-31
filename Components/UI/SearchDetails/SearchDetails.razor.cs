@@ -19,8 +19,24 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
         private readonly string _placeholderImage = "images/placeholder-car.svg";
         private bool _isSearchingDetails;
         private bool _isSearchingImages;
-        private bool _isSearchingAiSummary;
+        private bool _isSearchingAiOverview;
         private bool _isSearchingAiCommonIssues;
+        private bool _isSearchingAiMotHistorySummary;
+
+        private MarkupString? AiOverviewHtml =>
+            string.IsNullOrWhiteSpace(Vehicle?.AiOverview)
+                ? null
+                : (MarkupString)Markdig.Markdown.ToHtml(Vehicle.AiOverview);
+
+        private MarkupString? AiCommonIssuesHtml =>
+            string.IsNullOrWhiteSpace(Vehicle?.AiCommonIssues)
+                ? null
+                : (MarkupString)Markdig.Markdown.ToHtml(Vehicle.AiCommonIssues);
+
+        private MarkupString? AiMotHistorySummaryHtml =>
+            string.IsNullOrWhiteSpace(Vehicle?.AiMotHistorySummary)
+                ? null
+                : (MarkupString)Markdig.Markdown.ToHtml(Vehicle.AiMotHistorySummary);
 
         private Task OnSearchStarted(SearchType searchType)
         {
@@ -32,11 +48,14 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
                 case SearchType.Images:
                     _isSearchingImages = true;
                     break;
-                case SearchType.AiSummary:
-                    _isSearchingAiSummary = true;
+                case SearchType.AiOverview:
+                    _isSearchingAiOverview = true;
                     break;
                 case SearchType.AiCommonIssues:
                     _isSearchingAiCommonIssues = true;
+                    break;
+                case SearchType.AiMotHistorySummary:
+                    _isSearchingAiMotHistorySummary = true;
                     break;
             }
 
@@ -53,11 +72,14 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
                 case SearchType.Images:
                     _isSearchingImages = false;
                     break;
-                case SearchType.AiSummary:
-                    _isSearchingAiSummary = false;
+                case SearchType.AiOverview:
+                    _isSearchingAiOverview = false;
                     break;
                 case SearchType.AiCommonIssues:
                     _isSearchingAiCommonIssues = false;
+                    break;
+                case SearchType.AiMotHistorySummary:
+                    _isSearchingAiMotHistorySummary = false;
                     break;
             }
 
@@ -71,6 +93,16 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
                 await SearchRegistrationEventService.NotifySearchStarted(SearchType.AiCommonIssues);
                 Vehicle = await SearchRegistrationService.SearchVehicleAsync(Vehicle, SearchType.AiCommonIssues);
                 await SearchRegistrationEventService.NotifySearchCompleted(Vehicle, SearchType.AiCommonIssues);
+            }
+        }
+
+        private async Task OnMotHistoryExpandedAsync(bool expanded)
+        {
+            if (expanded && !_isSearchingAiMotHistorySummary && Vehicle != null && String.IsNullOrEmpty(Vehicle.AiMotHistorySummary))
+            {
+                await SearchRegistrationEventService.NotifySearchStarted(SearchType.AiMotHistorySummary);
+                Vehicle = await SearchRegistrationService.SearchVehicleAsync(Vehicle, SearchType.AiMotHistorySummary);
+                await SearchRegistrationEventService.NotifySearchCompleted(Vehicle, SearchType.AiMotHistorySummary);
             }
         }
 
