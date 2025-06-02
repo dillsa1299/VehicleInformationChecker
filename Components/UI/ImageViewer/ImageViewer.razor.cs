@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using VehicleInformationChecker.Components.Models.SearchResponses.ImageSearch;
 
 namespace VehicleInformationChecker.Components.UI.ImageViewer;

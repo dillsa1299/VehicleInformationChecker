@@ -1,4 +1,5 @@
-﻿@using VehicleInformationChecker.Components.UI.ImageViewer
+﻿@using VehicleInformationChecker.Components.Services.SearchRegistration
+@using VehicleInformationChecker.Components.UI.ImageViewer
 @using VehicleInformationChecker.Components.UI.MotStatus
 @using VehicleInformationChecker.Components.UI.MotHistory
 @using VehicleInformationChecker.Components.UI.TaxStatus
@@ -71,9 +72,19 @@
                     }
                     else
                     {
-                        <div class="ai-html">
-                            @AiOverviewHtml
-                        </div>
+                        @if (!String.IsNullOrEmpty(Vehicle?.AiOverview))
+                        {
+                            <div class="ai-html">
+                                @(AiOverviewHtml)
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex align-center">
+                                <MudText>@_aiFailedMessage</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Primary" OnClick="@(() => StartSearch(SearchType.AiOverview))" Class="ml-2" />
+                            </div>
+                        }
                     }
                 </MudPaper>
             </MudItem>
@@ -103,9 +114,19 @@
                             }
                             else
                             {
-                                <div class="ai-html">
-                                    @AiCommonIssuesHtml
-                                </div>
+                                @if (!String.IsNullOrEmpty(Vehicle?.AiCommonIssues))
+                                {
+                                    <div class="ai-html">
+                                        @(AiCommonIssuesHtml)
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="d-flex align-center">
+                                        <MudText>@_aiFailedMessage</MudText>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Primary" OnClick="@(() => StartSearch(SearchType.AiCommonIssues))" Class="ml-2" />
+                                    </div>
+                                }
                             }
                         </ChildContent>
                     </MudExpansionPanel>
@@ -130,9 +151,19 @@
                                 }
                                 else
                                 {
-                                    <div class="ai-html">
-                                        @AiMotHistorySummaryHtml
-                                    </div>
+                                    @if (!String.IsNullOrEmpty(Vehicle?.AiMotHistorySummary))
+                                    {
+                                        <div class="ai-html">
+                                            @(AiMotHistorySummaryHtml)
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex align-center">
+                                            <MudText>@_aiFailedMessage</MudText>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Primary" OnClick="@(() => StartSearch(SearchType.AiMotHistorySummary))" Class="ml-2" />
+                                        </div>
+                                    }
                                 }
 
                                 <MotHistory Vehicle="@Vehicle"></MotHistory>

@@ -16,8 +16,10 @@ namespace VehicleInformationChecker.Components.Pages
 
         private async Task SearchRegistration(string registration)
         {
-            // Details Search
             _vehicle = new VehicleModel { RegistrationNumber = registration };
+            StateHasChanged();
+
+            // Details Search
             await SearchRegistrationEventService.NotifySearchStarted(SearchType.Details);
             _vehicle = await SearchRegistrationService.SearchVehicleAsync(_vehicle, SearchType.Details);
             await SearchRegistrationEventService.NotifySearchCompleted(_vehicle, SearchType.Details);

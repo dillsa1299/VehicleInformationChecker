@@ -1,4 +1,6 @@
-﻿using System.Globalization;
+﻿using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -13,6 +15,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
     public sealed class SearchRegistrationService : ISearchRegistrationService
     {
         private readonly HttpClient _httpClient;
+        private readonly IJSRuntime _jsRuntime;
 
         private readonly string _vesKey;
         private readonly string _vesURL;
@@ -36,9 +39,10 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             PropertyNameCaseInsensitive = true
         };
 
-        public SearchRegistrationService(HttpClient httpClient, IConfiguration configuration)
+        public SearchRegistrationService(HttpClient httpClient, IJSRuntime jsRuntime, IConfiguration configuration)
         {
             _httpClient = httpClient;
+            _jsRuntime = jsRuntime;
 
             // Get configuration values
             _vesKey = configuration["APIs:VES:Key"]
@@ -68,6 +72,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                          ?? throw new InvalidOperationException("Gemini API URL not found in configuration.");
             _geminiKey = configuration["APIs:Gemini:Key"]
                          ?? throw new InvalidOperationException("Gemini API key not found in configuration.");
+            _jsRuntime = jsRuntime;
         }
 
         public async Task<VehicleModel> SearchVehicleAsync(VehicleModel vehicle, SearchType searchType)
@@ -227,6 +232,14 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
 
             if (response?.Items != null)
             {
+                // Get the URLs of the images and check if they are reachable using JavaScript.
+                var urls = response.Items.Select(img => img.Link).ToList();
+                var results = await _jsRuntime.InvokeAsync<ImageLoadResult[]>("checkImagesLoad", urls);
+
+                // Filter out the images that are not loaded successfully.
+                var loadedUrls = results.Where(r => r.Loaded).Select(r => r.Url).ToHashSet();
+                response.Items = response.Items.Where(img => loadedUrls.Contains(img.Link)).ToList();
+
                 int index = 1; // Initialize index starting from 1
                 foreach (var item in response.Items)
                 {
@@ -261,7 +274,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             HttpResponseMessage response = await _httpClient.PostAsync(_geminiUrl + _geminiKey, requestContent);
 
             if (!response.IsSuccessStatusCode)
-                return "Unable to generate AI summary. Please try again.";
+                return String.Empty;
 
             string responseString = await response.Content.ReadAsStringAsync();
 
@@ -381,5 +394,11 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
         }
         static DateOnly? DateOnlyTryParseIso(string? value)
             => DateTimeOffset.TryParse(value, out var dt) ? DateOnly.FromDateTime(dt.DateTime) : null;
+    }
+
+    public class ImageLoadResult
+    {
+        public string? Url { get; set; }
+        public bool Loaded { get; set; }
     }
 }

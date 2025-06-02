@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using VehicleInformationChecker.Components.Models;
 using VehicleInformationChecker.Components.Services.SearchRegistration;
 
@@ -12,11 +13,11 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
         [Inject]
         private ISearchRegistrationService SearchRegistrationService { get; set; } = default!;
 
-
         [Parameter]
         public VehicleModel? Vehicle { get; set; }
 
         private readonly string _placeholderImage = "images/placeholder-car.svg";
+        private readonly string _aiFailedMessage = "Unable to generate AI response. Please try again.";
         private bool _isSearchingDetails;
         private bool _isSearchingImages;
         private bool _isSearchingAiOverview;
@@ -90,9 +91,7 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
         {
             if (expanded && !_isSearchingAiCommonIssues && Vehicle != null && String.IsNullOrEmpty(Vehicle.AiCommonIssues))
             {
-                await SearchRegistrationEventService.NotifySearchStarted(SearchType.AiCommonIssues);
-                Vehicle = await SearchRegistrationService.SearchVehicleAsync(Vehicle, SearchType.AiCommonIssues);
-                await SearchRegistrationEventService.NotifySearchCompleted(Vehicle, SearchType.AiCommonIssues);
+                await StartSearch(SearchType.AiCommonIssues);
             }
         }
 
@@ -100,9 +99,17 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
         {
             if (expanded && !_isSearchingAiMotHistorySummary && Vehicle != null && String.IsNullOrEmpty(Vehicle.AiMotHistorySummary))
             {
-                await SearchRegistrationEventService.NotifySearchStarted(SearchType.AiMotHistorySummary);
-                Vehicle = await SearchRegistrationService.SearchVehicleAsync(Vehicle, SearchType.AiMotHistorySummary);
-                await SearchRegistrationEventService.NotifySearchCompleted(Vehicle, SearchType.AiMotHistorySummary);
+                await StartSearch(SearchType.AiMotHistorySummary);
+            }
+        }
+
+        private async Task StartSearch(SearchType searchType)
+        {
+            if (Vehicle != null)
+            {
+                await SearchRegistrationEventService.NotifySearchStarted(searchType);
+                Vehicle = await SearchRegistrationService.SearchVehicleAsync(Vehicle, searchType);
+                await SearchRegistrationEventService.NotifySearchCompleted(Vehicle, searchType);
             }
         }
 

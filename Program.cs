@@ -1,3 +1,4 @@
+using Microsoft.JSInterop;
 using MudBlazor.Services;
 using VehicleInformationChecker.Components;
 using VehicleInformationChecker.Components.Services.SearchRegistration;
@@ -15,12 +16,7 @@ builder.Services.AddHttpClient();
 
 // Register additional services
 builder.Services.AddScoped<ISearchRegistrationEventService, SearchRegistrationEventService>();
-builder.Services.AddScoped<ISearchRegistrationService>(provider =>
-{
-    var httpClient = provider.GetRequiredService<HttpClient>();
-    var configuration = provider.GetRequiredService<IConfiguration>();
-    return new SearchRegistrationService(httpClient, configuration);
-});
+builder.Services.AddScoped<ISearchRegistrationService, SearchRegistrationService>();
 
 var app = builder.Build();
 
