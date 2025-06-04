@@ -9,7 +9,7 @@ namespace VehicleInformationChecker.Components.UI.MotStatus
         [Parameter]
         public VehicleModel? Vehicle { get; set; }
 
-        private string _style = String.Empty;
+        private string _style = string.Empty;
 
         protected override void OnParametersSet()
         {

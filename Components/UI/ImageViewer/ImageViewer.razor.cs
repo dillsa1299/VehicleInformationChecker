@@ -11,5 +11,5 @@ public partial class ImageViewer
     public IEnumerable<ImageSearchItem> Images { get; set; } = [];
 
     [Parameter]
-    public string? PlaceholderImage { get; set; } = String.Empty;
+    public string? PlaceholderImage { get; set; } = string.Empty;
 }

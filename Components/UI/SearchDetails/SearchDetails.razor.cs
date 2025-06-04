@@ -89,7 +89,7 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
 
         private async Task OnCommonIssuesExpandedAsync(bool expanded)
         {
-            if (expanded && !_isSearchingAiCommonIssues && Vehicle != null && String.IsNullOrEmpty(Vehicle.AiCommonIssues))
+            if (!_isSearchingAiCommonIssues && Vehicle != null && String.IsNullOrEmpty(Vehicle.AiCommonIssues))
             {
                 await StartSearch(SearchType.AiCommonIssues);
             }
@@ -97,7 +97,7 @@ namespace VehicleInformationChecker.Components.UI.SearchDetails
 
         private async Task OnMotHistoryExpandedAsync(bool expanded)
         {
-            if (expanded && !_isSearchingAiMotHistorySummary && Vehicle != null && String.IsNullOrEmpty(Vehicle.AiMotHistorySummary))
+            if (!_isSearchingAiMotHistorySummary && Vehicle != null && String.IsNullOrEmpty(Vehicle.AiMotHistorySummary))
             {
                 await StartSearch(SearchType.AiMotHistorySummary);
             }

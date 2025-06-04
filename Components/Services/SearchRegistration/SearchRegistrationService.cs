@@ -88,7 +88,7 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
             string? aiMotHistorySummary = null;
 
             string aiCarDetails = $"Year={vehicle.YearOfManufacture}, Make={vehicle.Make}, Model={vehicle.Model}, Fuel Type={vehicle.FuelType}, Engine Capacity={vehicle.EngineCapacity}";
-            string aiMotResults = JsonSerializer.Serialize(vehicle.MotTests) ?? String.Empty;
+            string aiMotResults = JsonSerializer.Serialize(vehicle.MotTests) ?? string.Empty;
 
             switch (searchType)
             {
@@ -269,27 +269,41 @@ namespace VehicleInformationChecker.Components.Services.SearchRegistration
                 }
             };
             var jsonBody = JsonSerializer.Serialize(geminiRequest);
-
             var requestContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await _httpClient.PostAsync(_geminiUrl + _geminiKey, requestContent);
 
-            if (!response.IsSuccessStatusCode)
-                return String.Empty;
+            const int maxRetries = 10;
+            int delayMs = 10;
 
-            string responseString = await response.Content.ReadAsStringAsync();
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                HttpResponseMessage response = await _httpClient.PostAsync(_geminiUrl + _geminiKey, requestContent);
 
-            // responseString contains the JSON from the API
-            using var doc = JsonDocument.Parse(responseString);
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseString = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(responseString);
+                    var text = doc.RootElement
+                        .GetProperty("candidates")[0]
+                        .GetProperty("content")
+                        .GetProperty("parts")[0]
+                        .GetProperty("text")
+                        .GetString();
+                    return text ?? string.Empty;
+                }
+                else if ((int)response.StatusCode >= 500 && (int)response.StatusCode < 600 && attempt < maxRetries)
+                {
+                    // Exponential backoff
+                    await Task.Delay(delayMs);
+                    delayMs *= 2;
+                    continue;
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
 
-            // Grab only the text from the response, the rest is information we don't need
-            var text = doc.RootElement
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
-
-            return text ?? "Unable to generate response. Please try again.";
+            return string.Empty;
         }
 
         private static VehicleModel MapResponses(
